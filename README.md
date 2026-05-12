@@ -175,6 +175,16 @@ Ejemplo para crear un usuario con permiso de envío a n8n:
 - `npm run seed`: seed inicial de fuentes por categoria
 - `npm run test`: tests unitarios
 
+## Actualizacion automatica de noticias
+
+El backend ya puede poblar noticias sin login del frontend:
+
+- ejecuta un scraping automatico al iniciar la aplicacion
+- vuelve a correr automaticamente cada minuto
+- evita corridas superpuestas si una ejecucion tarda mas de un minuto
+
+Esto ocurre dentro del `SchedulerModule`, asi que no depende del endpoint `POST /news/scrape` ni de un JWT.
+
 ## Deploy en Railway
 
 1. Crea un nuevo proyecto en Railway y conecta este repositorio.
