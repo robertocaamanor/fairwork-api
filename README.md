@@ -76,6 +76,8 @@ npm run start:dev
 Usa este archivo `.env`:
 
 ```env
+DATABASE_URL=
+DATABASE_SSL=false
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_USER=postgres
@@ -85,6 +87,84 @@ PORT=3000
 FRONTEND_URL=http://localhost:5173
 N8N_URL=http://localhost:8080
 N8N_WEBHOOK_URL=http://localhost:8080/webhook/generate-article
+JWT_SECRET=change-me-in-production
+JWT_EXPIRES_IN=24h
+```
+
+Notas:
+
+- Si defines `DATABASE_URL`, la API la prioriza sobre `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD` y `DATABASE_NAME`.
+- En Railway normalmente conviene usar `DATABASE_URL` y `DATABASE_SSL=true`.
+- Define `JWT_SECRET` con un valor largo y estable antes de desplegar a producción.
+
+## Autenticación JWT
+
+La API usa JWT Bearer para proteger todos los endpoints, excepto:
+
+- `POST /auth/login`
+- `GET /`
+
+Usuarios iniciales creados automáticamente si no existen en la base de datos:
+
+- `admin / admin123`: administrador, puede enviar artículos a n8n y gestionar usuarios.
+- `demo / demo123`: usuario de solo consulta, sin permiso para enviar a n8n.
+
+### Login
+
+`POST /auth/login`
+
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "accessToken": "<jwt>",
+  "user": {
+    "id": "...",
+    "username": "admin",
+    "isAdmin": true,
+    "canSendToN8n": true,
+    "isActive": true
+  }
+}
+```
+
+Luego envía el token en `Authorization: Bearer <jwt>`.
+
+### Gestión de usuarios
+
+Solo `admin` puede gestionar usuarios.
+
+- `GET /users`: lista usuarios.
+- `POST /users`: crea usuarios.
+- `PATCH /users/:id`: actualiza permisos, password o estado.
+
+Ejemplo para crear un usuario que no puede enviar a n8n:
+
+```json
+{
+  "username": "lector",
+  "password": "lector123",
+  "isAdmin": false,
+  "canSendToN8n": false
+}
+```
+
+Ejemplo para crear un usuario con permiso de envío a n8n:
+
+```json
+{
+  "username": "editor",
+  "password": "editor123",
+  "isAdmin": false,
+  "canSendToN8n": true
+}
 ```
 
 ## Scripts npm
@@ -94,6 +174,21 @@ N8N_WEBHOOK_URL=http://localhost:8080/webhook/generate-article
 - `npm run start:prod`: ejecutar build
 - `npm run seed`: seed inicial de fuentes por categoria
 - `npm run test`: tests unitarios
+
+## Deploy en Railway
+
+1. Crea un nuevo proyecto en Railway y conecta este repositorio.
+2. Agrega un servicio PostgreSQL dentro del mismo proyecto.
+3. En el servicio de la API define estas variables:
+  - `DATABASE_URL=${{Postgres.DATABASE_URL}}`
+  - `DATABASE_SSL=true`
+  - `PORT=${{RAILWAY_TCP_PROXY_PORT}}` o deja que Railway inyecte `PORT` automaticamente.
+  - `FRONTEND_URL=https://tu-frontend.railway.app`
+  - `N8N_URL` y `N8N_WEBHOOK_URL` segun tu flujo.
+4. Railway detectara el `Dockerfile` y construira la imagen automaticamente.
+5. Una vez desplegado, abre la URL publica y verifica que responda `Hello World!` en `/`.
+
+Si necesitas poblar fuentes iniciales tras el primer deploy, ejecuta un shell en Railway y corre `npm run seed`.
 
 ## Seed inicial
 

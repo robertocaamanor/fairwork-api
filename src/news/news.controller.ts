@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { RequireAdmin, RequireSendToN8n } from '../auth/auth.decorators';
 import { NewsService } from './news.service';
 import {
   NewsFilterDto,
@@ -35,11 +36,13 @@ export class NewsController {
   }
 
   @Post('scrape')
+  @RequireAdmin()
   scrapeActiveSources() {
     return this.newsService.scrapeActiveSources();
   }
 
   @Post('repair-google-attributed')
+  @RequireAdmin()
   repairGoogleAttributed(@Query('limit') limit?: string) {
     const parsedLimit = Number(limit);
     return this.newsService.repairGoogleAttributedItems(
@@ -48,6 +51,7 @@ export class NewsController {
   }
 
   @Post('fix-dates')
+  @RequireAdmin()
   fixExistingDates(@Query('limit') limit?: string) {
     const parsedLimit = Number(limit);
     return this.newsService.fixExistingDates(
@@ -56,11 +60,13 @@ export class NewsController {
   }
 
   @Post(':id/send-to-n8n')
+  @RequireSendToN8n()
   sendToN8n(@Param('id', ParseUUIDPipe) id: string) {
     return this.newsService.sendToN8n(id);
   }
 
   @Patch(':id/status')
+  @RequireAdmin()
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateNewsStatusDto,
@@ -69,6 +75,7 @@ export class NewsController {
   }
 
   @Get('n8n')
+  @RequireSendToN8n()
   getN8nQueue() {
     return this.newsService.getForN8n();
   }
