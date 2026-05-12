@@ -16,6 +16,36 @@ const dataSource = new DataSource({
 });
 
 const newSources: Partial<NewsSource>[] = [
+  // ========== TV CHILENA ==========
+  {
+    name: 'Fotech Feed',
+    url: 'https://www.fotech.cl/feed/',
+    type: 'rss',
+    category: 'tv_chilena',
+    enabled: true,
+  },
+  {
+    name: 'Lima Limón Feed',
+    url: 'https://www.limalimon.cl/feed/',
+    type: 'rss',
+    category: 'tv_chilena',
+    enabled: true,
+  },
+  {
+    name: 'The Clinic Tiempo Libre Feed',
+    url: 'https://www.theclinic.cl/noticias/tiempo-libre/feed/',
+    type: 'rss',
+    category: 'tv_chilena',
+    enabled: true,
+  },
+  {
+    name: 'La Hora Global Feed',
+    url: 'https://lahora.cl/rss/global.xml',
+    type: 'rss',
+    category: 'tv_chilena',
+    enabled: true,
+  },
+
   // ========== TV INTERNACIONAL ==========
   {
     name: 'Variety TV',
@@ -62,6 +92,13 @@ const newSources: Partial<NewsSource>[] = [
   {
     name: 'TVBlog Italia',
     url: 'https://www.tvblog.it/feed',
+    type: 'rss',
+    category: 'tv_internacional',
+    enabled: true,
+  },
+  {
+    name: 'Novella 2000',
+    url: 'https://www.novella2000.it/feed/',
     type: 'rss',
     category: 'tv_internacional',
     enabled: true,
