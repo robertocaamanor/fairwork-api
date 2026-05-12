@@ -364,8 +364,12 @@ export class NewsService {
       throw new NotFoundException('News item not found');
     }
 
-    if (!item.cleanContent || item.cleanContent.length < 400) {
-      this.logger.log(`Intentando enriquecer noticia ${id} antes de enviar a n8n`);
+    const shouldEnrichBeforeSend = this.shouldEnrichBeforeSendToN8n(item);
+
+    if (shouldEnrichBeforeSend) {
+      this.logger.log(
+        `Intentando enriquecer noticia ${id} antes de enviar a n8n${this.isLikelyRssSource(item.sourceUrl) ? ' (fuente RSS)' : ''}`,
+      );
       const enriched = await this.articleResolverService.resolveAndEnrich(item);
       const patch = this.buildPersistableNewsPatch(item, enriched);
       item = await this.newsItemRepository.save(
@@ -709,6 +713,45 @@ export class NewsService {
       .replace(/&nbsp;/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  private shouldEnrichBeforeSendToN8n(item: NewsItem): boolean {
+    if (this.isLikelyRssSource(item.sourceUrl)) {
+      return !this.hasUsefulContent(item.fullContent) || !this.hasUsefulContent(item.cleanContent);
+    }
+
+    return !this.hasUsefulContent(item.cleanContent);
+  }
+
+  private isLikelyRssSource(url?: string | null): boolean {
+    const normalized = (url ?? '').trim().toLowerCase();
+    if (!normalized) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(normalized);
+      const pathname = parsed.pathname;
+
+      if (
+        pathname.endsWith('.xml') ||
+        pathname.endsWith('.rss') ||
+        pathname.includes('/rss') ||
+        pathname.includes('/feed') ||
+        pathname.includes('/feeds/')
+      ) {
+        return true;
+      }
+
+      return parsed.searchParams.get('output') === 'rss';
+    } catch {
+      return (
+        normalized.includes('/rss') ||
+        normalized.includes('/feed') ||
+        normalized.endsWith('.xml') ||
+        normalized.endsWith('.rss')
+      );
+    }
   }
 
   private looksLikeGoogleSnippet(content: string): boolean {
