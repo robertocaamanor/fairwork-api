@@ -3,6 +3,7 @@ import {
   BadGatewayException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -125,6 +126,8 @@ export class EditorialReviewQueryDto {
 
 @Injectable()
 export class EditorialService {
+  private readonly logger = new Logger(EditorialService.name);
+
   constructor(
     @InjectRepository(EditorialReview)
     private readonly editorialReviewRepository: Repository<EditorialReview>,
@@ -336,7 +339,7 @@ export class EditorialService {
 
     try {
       const response = await axios.post(webhookUrl, payload, {
-        timeout: 60000,
+        timeout: 180000,
       });
 
       if (!response.data || typeof response.data !== 'object') {
@@ -354,6 +357,17 @@ export class EditorialService {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const message = this.readN8nErrorMessage(error.response?.data);
+        const detail = [
+          status ? `HTTP ${status}` : undefined,
+          error.code,
+          message,
+        ]
+          .filter(Boolean)
+          .join(' - ');
+
+        this.logger.error(
+          `Fallo workflow n8n de propuestas${detail ? `: ${detail}` : ''}`,
+        );
 
         if (
           error.code === 'ECONNABORTED' ||
@@ -366,7 +380,7 @@ export class EditorialService {
           );
         }
 
-        throw new InternalServerErrorException(
+        throw new BadGatewayException(
           `No se pudo ejecutar workflow n8n de propuestas${
             status ? `: HTTP ${status}` : ''
           }${message ? ` - ${message}` : ''}`,
