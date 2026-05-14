@@ -18,56 +18,23 @@ async function runSeed() {
   await dataSource.initialize();
   const repo = dataSource.getRepository(NewsSource);
 
+  const googleNewsSearchUrl = (
+    query: string,
+    gl: string,
+    hl: string,
+  ): string => {
+    const ceidLanguage = hl.split('-')[0];
+    const params = new URLSearchParams({
+      q: query,
+      hl,
+      gl,
+      ceid: `${gl}:${ceidLanguage}`,
+    });
+
+    return `https://news.google.com/rss/search?${params.toString()}`;
+  };
+
   const seeds: Array<Partial<NewsSource>> = [
-    {
-      name: 'TV Chilena RSS',
-      url: 'https://news.google.com/rss/search?q=tv+chilena&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'tv_chilena',
-      enabled: true,
-    },
-    {
-      name: 'TV Internacional RSS',
-      url: 'https://news.google.com/rss/search?q=tv+internacional&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'tv_internacional',
-      enabled: true,
-    },
-    {
-      name: 'Musica RSS',
-      url: 'https://news.google.com/rss/search?q=musica+chile&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'musica',
-      enabled: true,
-    },
-    {
-      name: 'Farandula RSS',
-      url: 'https://news.google.com/rss/search?q=farandula+chile&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'farandula',
-      enabled: true,
-    },
-    {
-      name: 'Streaming RSS',
-      url: 'https://news.google.com/rss/search?q=streaming+series&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'streaming',
-      enabled: true,
-    },
-    {
-      name: 'Radio RSS',
-      url: 'https://news.google.com/rss/search?q=radio+chile&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'radio',
-      enabled: true,
-    },
-    {
-      name: 'Fiebre de Baile RSS',
-      url: 'https://news.google.com/rss/search?q=fiebre+de+baile&hl=es-419&gl=CL&ceid=CL:es-419',
-      type: 'rss',
-      category: 'fiebre_de_baile',
-      enabled: true,
-    },
     {
       name: 'Pagina7 Entretencion',
       url: 'https://www.pagina7.cl/entretencion/',
@@ -99,13 +66,6 @@ async function runSeed() {
         excludePattern: '/podcast/|/videos/|/tag/',
         maxItems: '40',
       },
-    },
-    {
-      name: 'Fotech',
-      url: 'https://www.fotech.cl',
-      type: 'html',
-      category: 'tv_chilena',
-      enabled: true,
     },
     {
       name: 'Fotech Feed',
@@ -143,7 +103,8 @@ async function runSeed() {
       selectors: {
         linkPattern:
           '^https?://(www\\.)?cooperativa\\.cl/noticias/magazine/.+/\\d{4}-\\d{2}-\\d{2}/\\d+\\.html$',
-        excludePattern: 'twitter\\.com/intent|tinyurl\\.com|/site/tax/|javascript:',
+        excludePattern:
+          'twitter\\.com/intent|tinyurl\\.com|/site/tax/|javascript:',
         maxItems: '50',
       },
     },
@@ -153,6 +114,12 @@ async function runSeed() {
       type: 'html',
       category: 'tv_chilena',
       enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?t13\\.cl/noticia/(espectaculos|tendencias)/[^?#]+/?$',
+        excludePattern: '/videos/|/programas/|javascript:',
+        maxItems: '50',
+      },
     },
     {
       name: '24 Horas Espectáculos',
@@ -160,6 +127,12 @@ async function runSeed() {
       type: 'html',
       category: 'tv_chilena',
       enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?24horas\\.cl/(tendencias/espectaculos|show|espectaculos)/[^?#]+/?$',
+        excludePattern: '/videos/|/programas/|javascript:',
+        maxItems: '50',
+      },
     },
     {
       name: 'Mega Entretenimiento',
@@ -167,6 +140,12 @@ async function runSeed() {
       type: 'html',
       category: 'tv_chilena',
       enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?mega\\.cl/(entretenimiento|programas)/[^?#]+/?$',
+        excludePattern: '/capitulos/|/videos/|/en-vivo/|javascript:',
+        maxItems: '50',
+      },
     },
     {
       name: 'CHV Show',
@@ -174,6 +153,12 @@ async function runSeed() {
       type: 'html',
       category: 'tv_chilena',
       enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?chilevision\\.cl/noticias/show/[^?#]+/?$',
+        excludePattern: '/videos/|/programas/|javascript:',
+        maxItems: '50',
+      },
     },
     {
       name: 'La Hora Entretención',
@@ -181,13 +166,11 @@ async function runSeed() {
       type: 'html',
       category: 'farandula',
       enabled: true,
-    },
-    {
-      name: 'La Hora Global Feed',
-      url: 'https://lahora.cl/rss/global.xml',
-      type: 'rss',
-      category: 'tv_chilena',
-      enabled: true,
+      selectors: {
+        linkPattern: '^https?://(www\\.)?lahora\\.cl/entretencion/[^?#]+/?$',
+        excludePattern: '/page/|/categoria/|javascript:',
+        maxItems: '50',
+      },
     },
     {
       name: 'Lima Limón Feed',
@@ -209,6 +192,12 @@ async function runSeed() {
       type: 'html',
       category: 'farandula',
       enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?lacuarta\\.com/(glamorama|espectaculos)/[^?#]+/?$',
+        excludePattern: '/temas/|/page/|javascript:',
+        maxItems: '50',
+      },
     },
     {
       name: 'TVBlog Italia',
@@ -224,12 +213,177 @@ async function runSeed() {
       category: 'tv_internacional',
       enabled: true,
     },
+    {
+      name: 'Vertele ElDiario',
+      url: 'https://www.eldiario.es/vertele/',
+      type: 'html',
+      category: 'tv_internacional',
+      enabled: true,
+      selectors: {
+        linkPattern: '^https?://(www\\.)?eldiario\\.es/vertele/[^?#]+/?$',
+        excludePattern: '/rss/|/videos/|/tags/|/page/|javascript:',
+        maxItems: '50',
+      },
+    },
+    {
+      name: 'Variety TV',
+      url: 'https://variety.com/v/tv/',
+      type: 'html',
+      category: 'tv_internacional',
+      enabled: true,
+      selectors: {
+        linkPattern: '^https?://(www\\.)?variety\\.com/\\d{4}/tv/[^?#]+/?$',
+        excludePattern: '/video/|/gallery/|/tags/|javascript:',
+        maxItems: '50',
+      },
+    },
+    {
+      name: 'Billboard Music',
+      url: 'https://www.billboard.com/c/music/',
+      type: 'html',
+      category: 'musica',
+      enabled: true,
+      selectors: {
+        linkPattern: '^https?://(www\\.)?billboard\\.com/(music|pro)/[^?#]+/?$',
+        excludePattern: '/video/|/photos/|/charts/|javascript:',
+        maxItems: '50',
+      },
+    },
+    {
+      name: 'Official Charts News',
+      url: 'https://www.officialcharts.com/news/',
+      type: 'html',
+      category: 'musica',
+      enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?officialcharts\\.com/(chart-news|news)/[^?#]+/?$',
+        excludePattern: '/archive/|/charts/|javascript:',
+        maxItems: '50',
+      },
+    },
+    {
+      name: 'La Cuarta Fiebre de Baile',
+      url: 'https://www.lacuarta.com/temas/fiebre-de-baile/',
+      type: 'html',
+      category: 'fiebre_de_baile',
+      enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?lacuarta\\.com/(espectaculos|glamorama)/[^?#]+/?$',
+        excludePattern: '/temas/|/page/|javascript:',
+        maxItems: '50',
+      },
+    },
+    {
+      name: 'TiempoX Fiebre de Baile',
+      url: 'https://www.tiempox.com/temas/fiebre-de-baile/',
+      type: 'html',
+      category: 'fiebre_de_baile',
+      enabled: true,
+      selectors: {
+        linkPattern:
+          '^https?://(www\\.)?tiempox\\.com/[a-z-]+/\\d{4}/\\d{2}/\\d{2}/[^?#]+/?$',
+        excludePattern: '/podcast/|/videos/|/tag/|/temas/',
+        maxItems: '50',
+      },
+    },
+    {
+      name: 'Google News Television Chile',
+      url: googleNewsSearchUrl(
+        '(television OR TV OR teleseries OR farandula) Chile',
+        'CL',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+    },
+    {
+      name: 'Google News Musica',
+      url: googleNewsSearchUrl(
+        '(musica OR cantante OR album OR concierto)',
+        'CL',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'musica',
+      enabled: true,
+    },
+    {
+      name: 'Google News Streaming',
+      url: googleNewsSearchUrl(
+        '(streaming OR Netflix OR Prime Video OR Disney+ OR Max)',
+        'CL',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'streaming',
+      enabled: true,
+    },
+    {
+      name: 'Google News TV Internacional España',
+      url: googleNewsSearchUrl(
+        '(television OR TV OR series) España',
+        'ES',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'tv_internacional',
+      enabled: true,
+    },
+    {
+      name: 'Google News TV Internacional Italia',
+      url: googleNewsSearchUrl(
+        '(televisione OR TV OR serie) Italia',
+        'IT',
+        'it',
+      ),
+      type: 'rss',
+      category: 'tv_internacional',
+      enabled: true,
+    },
+    {
+      name: 'Google News TV Internacional Estados Unidos',
+      url: googleNewsSearchUrl(
+        '(television OR TV OR series) "United States"',
+        'US',
+        'en-US',
+      ),
+      type: 'rss',
+      category: 'tv_internacional',
+      enabled: true,
+    },
+    {
+      name: 'Google News TV Internacional Argentina',
+      url: googleNewsSearchUrl(
+        '(television OR TV OR series) Argentina',
+        'AR',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'tv_internacional',
+      enabled: true,
+    },
+    {
+      name: 'Google News TV Internacional México',
+      url: googleNewsSearchUrl(
+        '(television OR TV OR series) Mexico',
+        'MX',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'tv_internacional',
+      enabled: true,
+    },
   ];
 
   for (const seed of seeds) {
     const existing = await repo.findOne({ where: { name: seed.name } });
     if (!existing) {
       await repo.save(repo.create(seed));
+    } else {
+      await repo.save(repo.merge(existing, seed));
     }
   }
 
