@@ -16,6 +16,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { RequireSendToN8n } from '../auth/auth.decorators';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import { CreateEditorialTopicDto } from './dto/create-editorial-topic.dto';
 import { CreateTopicProposalsDto } from './dto/create-topic-proposals.dto';
 import { CreateEditorialReviewDto } from './dto/create-editorial-review.dto';
 import { GenerateTopicProposalsDto } from './dto/generate-topic-proposals.dto';
@@ -34,11 +35,21 @@ export class EditorialController {
     return this.editorialService.createReview(dto);
   }
 
+  @Post('topics')
+  @UseGuards(JwtAuthGuard)
+  createTopic(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateEditorialTopicDto,
+  ) {
+    return this.editorialService.createTopic(dto, req.user.sub);
+  }
+
   @Post('topics/:id/proposals')
+  @UseGuards(JwtAuthGuard)
   createTopicProposals(
     @Param('id') id: string,
     @Body() dto: CreateTopicProposalsDto,
-    @CurrentUser() user?: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.editorialService.createTopicProposals(id, dto, user);
   }

@@ -15,6 +15,7 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { NewsItem } from '../news/entities/news-item.entity';
 import type { NewsCategory } from '../news/entities/news-source.entity';
 import { UsersService } from '../users/users.service';
+import { CreateEditorialTopicDto } from './dto/create-editorial-topic.dto';
 import { CreateTopicProposalsDto } from './dto/create-topic-proposals.dto';
 import { CreateEditorialReviewDto } from './dto/create-editorial-review.dto';
 import { MarkEditorialPublishedDto } from './dto/mark-editorial-published.dto';
@@ -28,6 +29,7 @@ import {
   EDITORIAL_REVIEW_STATUSES,
 } from './entities/editorial-review.entity';
 import type { EditorialReviewStatus } from './entities/editorial-review.entity';
+import { EditorialTopicCluster } from './entities/editorial-topic-cluster.entity';
 import { EditorialTopicProposal } from './entities/editorial-topic-proposal.entity';
 
 const ACTIVE_REVIEW_STATUSES: EditorialReviewStatus[] = [
@@ -65,7 +67,7 @@ interface N8nTopicSourcePayload {
   content: string;
   sourceName: string;
   originalUrl: string;
-  publishedAt: Date;
+  publishedAt: Date | string;
   category: NewsCategory;
 }
 
@@ -83,7 +85,7 @@ interface N8nTopicPayload {
 interface ResolvedTopicCluster {
   theme: string;
   category: NewsCategory;
-  sources: NewsItem[];
+  sources: Array<NewsItem | Record<string, unknown>>;
 }
 
 export class EditorialReviewQueryDto {
@@ -114,6 +116,8 @@ export class EditorialService {
   constructor(
     @InjectRepository(EditorialReview)
     private readonly editorialReviewRepository: Repository<EditorialReview>,
+    @InjectRepository(EditorialTopicCluster)
+    private readonly topicClusterRepository: Repository<EditorialTopicCluster>,
     @InjectRepository(EditorialTopicProposal)
     private readonly topicProposalRepository: Repository<EditorialTopicProposal>,
     @InjectRepository(NewsItem)
@@ -144,6 +148,61 @@ export class EditorialService {
     });
 
     return this.editorialReviewRepository.save(entity);
+  }
+
+  async createTopic(
+    dto: CreateEditorialTopicDto,
+    userId: string,
+  ): Promise<{
+    id: string;
+    theme: string;
+    category: NewsCategory;
+  }> {
+    const user = await this.usersService.findById(userId);
+
+    if (!user.isActive) {
+      throw new BadRequestException('Usuario deshabilitado');
+    }
+
+    const theme = dto.theme.trim();
+    const normalizedTheme = this.normalizeTheme(theme);
+
+    if (!normalizedTheme) {
+      throw new BadRequestException('theme es requerido');
+    }
+
+    const existing = await this.topicClusterRepository.findOne({
+      where: {
+        normalizedTheme,
+        category: dto.category,
+      },
+    });
+
+    if (existing) {
+      return {
+        id: existing.id,
+        theme: existing.theme,
+        category: existing.category,
+      };
+    }
+
+    const topic = this.topicClusterRepository.create({
+      theme,
+      normalizedTheme,
+      category: dto.category,
+      tone: dto.tone?.trim() || 'informativo',
+      sourceNewsIds: dto.sourceNewsIds ?? [],
+      sources: dto.sources ?? [],
+      createdByUserId: userId,
+    });
+
+    const saved = await this.topicClusterRepository.save(topic);
+
+    return {
+      id: saved.id,
+      theme: saved.theme,
+      category: saved.category,
+    };
   }
 
   async generateTopicProposals(
@@ -236,6 +295,20 @@ export class EditorialService {
   }> {
     const topicId = dto.topicId.trim();
     const pathTopicId = topicIdFromPath.trim();
+
+    if (!pathTopicId) {
+      throw new BadRequestException('id de tematica es requerido');
+    }
+
+    if (!user?.sub) {
+      throw new BadRequestException('Usuario no autenticado');
+    }
+
+    const userEntity = await this.usersService.findById(user.sub);
+
+    if (!userEntity.isActive) {
+      throw new BadRequestException('Usuario deshabilitado');
+    }
 
     if (topicId !== pathTopicId) {
       throw new BadRequestException(
@@ -434,6 +507,17 @@ export class EditorialService {
     return 'rejected';
   }
 
+  private normalizeTheme(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   private buildN8nTopicPayload(
     input: GenerateTopicProposalsInput,
     topic: ResolvedTopicCluster,
@@ -446,21 +530,9 @@ export class EditorialService {
       requestedProposals: input.requestedProposals,
       createdByUserId: input.userId,
       jwt: input.jwt,
-      sources: topic.sources.map((source) => ({
-        id: source.id,
-        title: source.title,
-        summary: source.summary ?? '',
-        content:
-          source.cleanContent ??
-          source.fullContent ??
-          source.content ??
-          source.summary ??
-          '',
-        sourceName: source.sourceName,
-        originalUrl: source.resolvedUrl || source.originalUrl,
-        publishedAt: source.publishedAt,
-        category: source.category,
-      })),
+      sources: topic.sources.map((source) =>
+        this.buildN8nSourcePayload(source, topic.category),
+      ),
     };
   }
 
@@ -474,10 +546,42 @@ export class EditorialService {
     }
 
     if (this.isUuid(normalizedTopicId)) {
+      const topic = await this.resolveTopicByClusterId(normalizedTopicId);
+      if (topic) {
+        return topic;
+      }
+
       return this.resolveTopicByNewsId(normalizedTopicId);
     }
 
     return this.resolveTopicBySearchText(normalizedTopicId);
+  }
+
+  private async resolveTopicByClusterId(
+    topicId: string,
+  ): Promise<ResolvedTopicCluster | null> {
+    const topic = await this.topicClusterRepository.findOne({
+      where: { id: topicId },
+    });
+
+    if (!topic) {
+      return null;
+    }
+
+    const newsSources =
+      topic.sourceNewsIds.length > 0
+        ? await this.newsItemRepository.find({
+            where: {
+              id: In(topic.sourceNewsIds),
+            },
+          })
+        : [];
+
+    return {
+      theme: topic.theme,
+      category: topic.category,
+      sources: newsSources.length > 0 ? newsSources : topic.sources,
+    };
   }
 
   private async resolveTopicByNewsId(
@@ -613,6 +717,73 @@ export class EditorialService {
   private isUuid(value: string): boolean {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       value,
+    );
+  }
+
+  private buildN8nSourcePayload(
+    source: NewsItem | Record<string, unknown>,
+    fallbackCategory: NewsCategory,
+  ): N8nTopicSourcePayload {
+    if (source instanceof NewsItem) {
+      return {
+        id: source.id,
+        title: source.title,
+        summary: source.summary ?? '',
+        content:
+          source.cleanContent ??
+          source.fullContent ??
+          source.content ??
+          source.summary ??
+          '',
+        sourceName: source.sourceName,
+        originalUrl: source.resolvedUrl || source.originalUrl,
+        publishedAt: source.publishedAt,
+        category: source.category,
+      };
+    }
+
+    return {
+      id: this.readRecordString(source.id),
+      title: this.readRecordString(source.title),
+      summary: this.readRecordString(source.summary),
+      content: this.readRecordString(source.content),
+      sourceName: this.readRecordString(source.sourceName),
+      originalUrl: this.readRecordString(source.originalUrl),
+      publishedAt: this.readRecordString(source.publishedAt),
+      category: this.isNewsCategory(source.category)
+        ? source.category
+        : fallbackCategory,
+    };
+  }
+
+  private readRecordString(value: unknown): string {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    if (typeof value === 'number') {
+      return String(value);
+    }
+
+    return '';
+  }
+
+  private isNewsCategory(value: unknown): value is NewsCategory {
+    return (
+      typeof value === 'string' &&
+      [
+        'tv_chilena',
+        'tv_internacional',
+        'musica',
+        'farandula',
+        'streaming',
+        'radio',
+        'fiebre_de_baile',
+      ].includes(value)
     );
   }
 
