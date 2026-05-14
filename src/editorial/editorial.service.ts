@@ -357,10 +357,15 @@ export class EditorialService {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const message = this.readN8nErrorMessage(error.response?.data);
+        const responseDetail = status
+          ? `HTTP ${status}${message ? ` - ${message}` : ''}`
+          : '';
+        const noResponseDetail = !status
+          ? this.describeN8nConnectionError(error.code, error.message)
+          : '';
         const detail = [
-          status ? `HTTP ${status}` : undefined,
-          error.code,
-          message,
+          responseDetail,
+          noResponseDetail,
         ]
           .filter(Boolean)
           .join(' - ');
@@ -382,8 +387,8 @@ export class EditorialService {
 
         throw new BadGatewayException(
           `No se pudo ejecutar workflow n8n de propuestas${
-            status ? `: HTTP ${status}` : ''
-          }${message ? ` - ${message}` : ''}`,
+            detail ? `: ${detail}` : ''
+          }`,
         );
       }
 
@@ -1234,5 +1239,28 @@ export class EditorialService {
     const message = record.message ?? record.error;
 
     return typeof message === 'string' ? message : '';
+  }
+
+  private describeN8nConnectionError(
+    code?: string,
+    message?: string,
+  ): string {
+    if (code === 'ECONNABORTED') {
+      return 'timeout esperando respuesta de n8n';
+    }
+
+    if (code === 'ECONNREFUSED') {
+      return 'n8n rechazo la conexion; revisa que la URL no sea localhost y que el webhook este publicado';
+    }
+
+    if (code === 'ENOTFOUND') {
+      return 'no se pudo resolver el host de n8n; revisa N8N_TOPIC_PROPOSALS_WEBHOOK_URL';
+    }
+
+    if (code) {
+      return `${code}${message ? ` - ${message}` : ''}`;
+    }
+
+    return message || 'n8n no respondio';
   }
 }
