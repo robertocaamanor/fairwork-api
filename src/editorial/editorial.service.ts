@@ -88,10 +88,10 @@ interface ResolvedTopicCluster {
   sources: Array<NewsItem | Record<string, unknown>>;
 }
 
-interface EditorialTopicSummary {
+export interface EditorialTopicSummary {
   id: string;
   theme: string;
-  category: NewsCategory | string;
+  category: string;
   tone: string;
   proposalCount: number;
   createdAt?: Date;
@@ -215,11 +215,20 @@ export class EditorialService {
     };
   }
 
-  async listTopics(): Promise<EditorialTopicSummary[]> {
-    const topics = await this.topicClusterRepository.find({
-      order: { updatedAt: 'DESC' },
-      take: 100,
-    });
+  async listTopics(query?: string): Promise<EditorialTopicSummary[]> {
+    const normalizedQuery = query?.trim();
+    const topicQb = this.topicClusterRepository
+      .createQueryBuilder('topic')
+      .orderBy('topic.updatedAt', 'DESC')
+      .take(100);
+
+    if (normalizedQuery) {
+      topicQb.where('topic.theme ILIKE :query', {
+        query: `%${normalizedQuery}%`,
+      });
+    }
+
+    const topics = await topicQb.getMany();
     const topicIds = topics.map((topic) => topic.id);
     const proposalCounts = await this.getProposalCountsByTopicId(topicIds);
     const summaries = topics.map((topic) => ({
@@ -239,9 +248,20 @@ export class EditorialService {
       .addSelect('MAX(proposal.tone)', 'tone')
       .addSelect('COUNT(proposal.id)', 'proposalCount')
       .addSelect('MAX(proposal.updatedAt)', 'updatedAt')
-      .where(topicIds.length > 0 ? 'proposal.topicId NOT IN (:...topicIds)' : '1 = 1', {
-        topicIds,
-      })
+      .where(
+        topicIds.length > 0
+          ? 'proposal.topicId NOT IN (:...topicIds)'
+          : '1 = 1',
+        {
+          topicIds,
+        },
+      )
+      .andWhere(
+        normalizedQuery ? 'proposal.theme ILIKE :proposalQuery' : '1 = 1',
+        {
+          proposalQuery: `%${normalizedQuery}%`,
+        },
+      )
       .groupBy('proposal.topicId')
       .orderBy('MAX(proposal.updatedAt)', 'DESC')
       .limit(100)
@@ -265,7 +285,9 @@ export class EditorialService {
       })),
     ].sort((left, right) => {
       const leftTime = left.updatedAt ? new Date(left.updatedAt).getTime() : 0;
-      const rightTime = right.updatedAt ? new Date(right.updatedAt).getTime() : 0;
+      const rightTime = right.updatedAt
+        ? new Date(right.updatedAt).getTime()
+        : 0;
 
       return rightTime - leftTime;
     });

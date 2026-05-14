@@ -46,8 +46,8 @@ export class EditorialController {
 
   @Get('topics')
   @UseGuards(JwtAuthGuard)
-  listTopics() {
-    return this.editorialService.listTopics();
+  listTopics(@Query('q') query?: string) {
+    return this.editorialService.listTopics(query);
   }
 
   @Post('topics/:id/proposals')
