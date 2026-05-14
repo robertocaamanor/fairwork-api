@@ -27,6 +27,6 @@ import { NewsSourceSeederService } from './services/news-source-seeder.service';
     PuppeteerResolverService,
     NewsSourceSeederService,
   ],
-  exports: [NewsService, NewsSourceSeederService],
+  exports: [NewsService, NewsSourceSeederService, ArticleResolverService],
 })
 export class NewsModule {}

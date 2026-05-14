@@ -60,6 +60,23 @@ export class EditorialController {
     return this.editorialService.createTopicProposals(id, dto, user);
   }
 
+  @Post('topics/generate-proposals')
+  @UseGuards(JwtAuthGuard)
+  async generateProposalsFromNews(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: GenerateTopicProposalsDto,
+  ) {
+    const jwt = req.headers.authorization?.replace(/^Bearer\s+/i, '') || '';
+
+    return this.editorialService.generateTopicProposals({
+      newsIds: body.newsIds ?? [],
+      tone: body.tone ?? 'informativo',
+      requestedProposals: body.requestedProposals ?? 5,
+      jwt,
+      userId: req.user.sub,
+    });
+  }
+
   @Post('topics/:id/generate-proposals')
   @UseGuards(JwtAuthGuard)
   async generateProposals(

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { NewsModule } from '../news/news.module';
 import { NewsItem } from '../news/entities/news-item.entity';
 import { UsersModule } from '../users/users.module';
 import { EditorialController } from './editorial.controller';
@@ -16,6 +17,7 @@ import { EditorialTopicProposal } from './entities/editorial-topic-proposal.enti
       EditorialTopicProposal,
       NewsItem,
     ]),
+    NewsModule,
     UsersModule,
   ],
   controllers: [EditorialController],

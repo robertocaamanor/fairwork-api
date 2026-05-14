@@ -14,6 +14,7 @@ import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { NewsItem } from '../news/entities/news-item.entity';
 import type { NewsCategory } from '../news/entities/news-source.entity';
+import { ArticleResolverService } from '../news/services/article-resolver.service';
 import { UsersService } from '../users/users.service';
 import { CreateEditorialTopicDto } from './dto/create-editorial-topic.dto';
 import { CreateTopicProposalsDto } from './dto/create-topic-proposals.dto';
@@ -53,7 +54,8 @@ interface WordpressDraftInput {
 }
 
 interface GenerateTopicProposalsInput {
-  topicId: string;
+  topicId?: string;
+  newsIds?: string[];
   tone: string;
   requestedProposals: number;
   jwt: string;
@@ -72,7 +74,7 @@ interface N8nTopicSourcePayload {
 }
 
 interface N8nTopicPayload {
-  topicId: string;
+  topicId?: string;
   theme: string;
   category: NewsCategory;
   tone: string;
@@ -134,6 +136,7 @@ export class EditorialService {
     private readonly newsItemRepository: Repository<NewsItem>,
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
+    private readonly articleResolverService: ArticleResolverService,
   ) {}
 
   async createReview(dto: CreateEditorialReviewDto): Promise<EditorialReview> {
@@ -302,7 +305,9 @@ export class EditorialService {
       throw new BadRequestException('Usuario deshabilitado');
     }
 
-    const topic = await this.resolveTopicCluster(input.topicId);
+    const topic = input.newsIds?.length
+      ? await this.resolveTopicByNewsIds(input.newsIds)
+      : await this.resolveTopicCluster(input.topicId ?? '');
 
     if (topic.sources.length === 0) {
       throw new BadRequestException('El topico no tiene fuentes relacionadas');
@@ -310,6 +315,7 @@ export class EditorialService {
 
     console.log('[Editorial] Generando propuestas IA', {
       topicId: input.topicId,
+      newsIds: input.newsIds,
       userId: input.userId,
       date: new Date().toISOString(),
       tone: input.tone,
@@ -317,6 +323,7 @@ export class EditorialService {
     });
 
     const payload = this.buildN8nTopicPayload(input, topic);
+    console.log('Enviando lote a n8n', payload.sources.length);
     const webhookUrl = this.configService
       .get<string>('N8N_TOPIC_PROPOSALS_WEBHOOK_URL')
       ?.trim();
@@ -631,7 +638,7 @@ export class EditorialService {
     topic: ResolvedTopicCluster,
   ): N8nTopicPayload {
     return {
-      topicId: input.topicId,
+      ...(input.topicId ? { topicId: input.topicId } : {}),
       theme: topic.theme,
       category: topic.category,
       tone: input.tone,
@@ -663,6 +670,132 @@ export class EditorialService {
     }
 
     return this.resolveTopicBySearchText(normalizedTopicId);
+  }
+
+  private async resolveTopicByNewsIds(
+    newsIds: string[],
+  ): Promise<ResolvedTopicCluster> {
+    const uniqueNewsIds = Array.from(
+      new Set(newsIds.map((newsId) => newsId.trim()).filter(Boolean)),
+    );
+
+    if (uniqueNewsIds.length === 0) {
+      throw new BadRequestException('newsIds es requerido');
+    }
+
+    const foundItems = await this.newsItemRepository.find({
+      where: { id: In(uniqueNewsIds) },
+    });
+    const itemsById = new Map(foundItems.map((item) => [item.id, item]));
+    const missingIds = uniqueNewsIds.filter((newsId) => !itemsById.has(newsId));
+
+    if (missingIds.length > 0) {
+      throw new NotFoundException(
+        `Noticias no encontradas: ${missingIds.join(', ')}`,
+      );
+    }
+
+    const sources: NewsItem[] = [];
+
+    for (const newsId of uniqueNewsIds) {
+      const item = itemsById.get(newsId);
+      if (!item) {
+        continue;
+      }
+
+      sources.push(await this.ensureNewsContentForN8n(item));
+    }
+
+    const firstSource = sources[0];
+
+    return {
+      theme: firstSource.title,
+      category: this.resolvePrimaryCategory(sources),
+      sources,
+    };
+  }
+
+  private async ensureNewsContentForN8n(item: NewsItem): Promise<NewsItem> {
+    if (!this.shouldEnrichSourceForN8n(item)) {
+      return item;
+    }
+
+    const enriched = await this.articleResolverService.resolveAndEnrich(item);
+    const patch = this.buildEnrichedNewsPatch(item, enriched);
+
+    if (!this.hasEnrichedNewsChanges(item, patch)) {
+      return item;
+    }
+
+    return this.newsItemRepository.save(
+      this.newsItemRepository.merge(item, patch),
+    );
+  }
+
+  private shouldEnrichSourceForN8n(item: NewsItem): boolean {
+    return (
+      !this.hasStrongSourceContent(item.cleanContent) ||
+      !this.hasStrongSourceContent(item.content)
+    );
+  }
+
+  private buildEnrichedNewsPatch(
+    current: NewsItem,
+    incoming: Partial<NewsItem>,
+  ): Partial<NewsItem> {
+    return {
+      title: this.readStrongText(incoming.title) || current.title,
+      summary: this.readStrongText(incoming.summary) || current.summary,
+      content:
+        this.readStrongText(incoming.cleanContent) ||
+        this.readStrongText(incoming.fullContent) ||
+        this.readStrongText(incoming.content) ||
+        current.content,
+      cleanContent:
+        this.readStrongText(incoming.cleanContent) || current.cleanContent,
+      fullContent: this.readStrongText(incoming.fullContent) || current.fullContent,
+      resolvedUrl: this.readStrongText(incoming.resolvedUrl) || current.resolvedUrl,
+      resolvedSourceDomain:
+        this.readStrongText(incoming.resolvedSourceDomain) ||
+        current.resolvedSourceDomain,
+      extractedImageUrl:
+        this.readStrongText(incoming.extractedImageUrl) ||
+        current.extractedImageUrl,
+      imageUrl: this.readStrongText(incoming.imageUrl) || current.imageUrl,
+      author: this.readStrongText(incoming.author) || current.author,
+      publishedAt: incoming.publishedAt || current.publishedAt,
+      rawPublishedAt: incoming.rawPublishedAt || current.rawPublishedAt,
+    };
+  }
+
+  private hasEnrichedNewsChanges(
+    current: NewsItem,
+    patch: Partial<NewsItem>,
+  ): boolean {
+    return (
+      (patch.title ?? '') !== (current.title ?? '') ||
+      (patch.summary ?? '') !== (current.summary ?? '') ||
+      (patch.content ?? '') !== (current.content ?? '') ||
+      (patch.cleanContent ?? '') !== (current.cleanContent ?? '') ||
+      (patch.fullContent ?? '') !== (current.fullContent ?? '') ||
+      (patch.resolvedUrl ?? '') !== (current.resolvedUrl ?? '') ||
+      (patch.imageUrl ?? '') !== (current.imageUrl ?? '') ||
+      (patch.extractedImageUrl ?? '') !== (current.extractedImageUrl ?? '')
+    );
+  }
+
+  private resolvePrimaryCategory(sources: NewsItem[]): NewsCategory {
+    const counts = new Map<NewsCategory, number>();
+
+    for (const source of sources) {
+      counts.set(source.category, (counts.get(source.category) ?? 0) + 1);
+    }
+
+    return sources.reduce((primary, source) => {
+      const sourceCount = counts.get(source.category) ?? 0;
+      const primaryCount = counts.get(primary) ?? 0;
+      return sourceCount > primaryCount ? source.category : primary;
+    }, sources[0].category);
   }
 
   private async resolveTopicByClusterId(
@@ -838,10 +971,10 @@ export class EditorialService {
         title: source.title,
         summary: source.summary ?? '',
         content:
-          source.cleanContent ??
-          source.fullContent ??
-          source.content ??
-          source.summary ??
+          source.cleanContent ||
+          source.fullContent ||
+          source.content ||
+          source.summary ||
           '',
         sourceName: source.sourceName,
         originalUrl: source.resolvedUrl || source.originalUrl,
@@ -878,6 +1011,23 @@ export class EditorialService {
     }
 
     return '';
+  }
+
+  private hasStrongSourceContent(value?: string | null): boolean {
+    return this.stripHtmlToText(value ?? '').length >= 400;
+  }
+
+  private readStrongText(value?: string | null): string | undefined {
+    const normalized = this.stripHtmlToText(value ?? '');
+    return normalized || undefined;
+  }
+
+  private stripHtmlToText(input: string): string {
+    return (input || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private isNewsCategory(value: unknown): value is NewsCategory {
