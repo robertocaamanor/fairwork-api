@@ -3,13 +3,18 @@ import { NewsSource } from './entities/news-source.entity';
 const googleNewsSearchUrl = (query: string, gl: string, hl: string): string => {
   const ceidLanguage = hl.split('-')[0];
   const params = new URLSearchParams({
-    q: query,
+    q: `${query} when:1d`,
     hl,
     gl,
     ceid: `${gl}:${ceidLanguage}`,
   });
 
   return `https://news.google.com/rss/search?${params.toString()}`;
+};
+
+const googleNewsSelectors = {
+  maxAgeHours: '24',
+  sortOrder: 'desc',
 };
 
 export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
@@ -277,6 +282,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'tv_chilena',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News Musica',
@@ -288,6 +294,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'musica',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News Streaming',
@@ -299,6 +306,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'streaming',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News TV Internacional España',
@@ -310,6 +318,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News TV Internacional Italia',
@@ -321,6 +330,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News TV Internacional Estados Unidos',
@@ -332,6 +342,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News TV Internacional Argentina',
@@ -343,6 +354,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News TV Internacional México',
@@ -354,6 +366,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
   ];
 }

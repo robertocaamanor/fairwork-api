@@ -3,7 +3,11 @@ import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
 import { NewsSource } from '../entities/news-source.entity';
 import { NewsScraper, ScrapedNewsInput } from './scraper.interface';
-import { normalizeDate, serializeRawDate } from '../../common/utils/date.utils';
+import {
+  normalizeDate,
+  parsePublishedDate,
+  serializeRawDate,
+} from '../../common/utils/date.utils';
 
 @Injectable()
 export class RssScraper implements NewsScraper {
@@ -22,12 +26,18 @@ export class RssScraper implements NewsScraper {
   async scrape(source: NewsSource): Promise<ScrapedNewsInput[]> {
     try {
       const feed = await this.parser.parseURL(source.url);
-      return (feed.items ?? [])
+      const maxAgeHours = this.parseMaxAgeHours(source.selectors?.maxAgeHours);
+      const sortOrder = this.parseSortOrder(source.selectors?.sortOrder);
+
+      const filteredItems = (feed.items ?? [])
         .map((item) => {
           const rawLink = (item.link ?? '').trim();
           const contentHtml = item.content ?? '';
           const preferredLink = this.extractPreferredLink(contentHtml, rawLink);
-          const preferredTitle = this.extractPreferredTitle(item.title ?? '', contentHtml);
+          const preferredTitle = this.extractPreferredTitle(
+            item.title ?? '',
+            contentHtml,
+          );
           const preferredSummary = this.extractPreferredSummary(
             item.contentSnippet ?? '',
             contentHtml,
@@ -38,12 +48,15 @@ export class RssScraper implements NewsScraper {
           const enclosureImage =
             (item as Record<string, unknown>)['enclosure'] &&
             typeof (item as Record<string, unknown>)['enclosure'] === 'object'
-              ? ((item as { enclosure?: { url?: string } }).enclosure?.url ?? '')
+              ? ((item as { enclosure?: { url?: string } }).enclosure?.url ??
+                '')
               : '';
 
-          // Normalizar fecha de publicación
           const rawDate = item.isoDate || item.pubDate || (item as any).date;
-          const publishedAt = normalizeDate(rawDate, `${source.name}:${preferredTitle}`);
+          const publishedAt = normalizeDate(
+            rawDate,
+            `${source.name}:${preferredTitle}`,
+          );
           const rawPublishedAt = serializeRawDate(rawDate);
 
           return {
@@ -63,12 +76,74 @@ export class RssScraper implements NewsScraper {
           (item) =>
             item.title &&
             item.originalUrl &&
-            !this.isGooglePlaceholderTitle(item.title),
+            !this.isGooglePlaceholderTitle(item.title) &&
+            this.isWithinMaxAge(
+              item.rawPublishedAt,
+              item.publishedAt,
+              maxAgeHours,
+            ),
         );
+
+      return this.sortByPublishedAt(filteredItems, sortOrder);
     } catch (error) {
-      this.logger.warn(`RSS scrape failed for ${source.name}: ${String(error)}`);
+      this.logger.warn(
+        `RSS scrape failed for ${source.name}: ${String(error)}`,
+      );
       return [];
     }
+  }
+
+  private parseMaxAgeHours(raw: string | undefined): number | undefined {
+    if (!raw) {
+      return undefined;
+    }
+
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return undefined;
+    }
+
+    return parsed;
+  }
+
+  private parseSortOrder(raw: string | undefined): 'asc' | 'desc' {
+    return raw === 'asc' ? 'asc' : 'desc';
+  }
+
+  private isWithinMaxAge(
+    rawPublishedAt: string | undefined,
+    publishedAt: Date | undefined,
+    maxAgeHours?: number,
+  ): boolean {
+    if (!maxAgeHours) {
+      return true;
+    }
+
+    const comparableDate = rawPublishedAt
+      ? parsePublishedDate(rawPublishedAt)
+      : publishedAt;
+
+    if (
+      !(comparableDate instanceof Date) ||
+      Number.isNaN(comparableDate.getTime())
+    ) {
+      return false;
+    }
+
+    const ageMs = Date.now() - comparableDate.getTime();
+    return ageMs >= 0 && ageMs <= maxAgeHours * 60 * 60 * 1000;
+  }
+
+  private sortByPublishedAt(
+    items: ScrapedNewsInput[],
+    sortOrder: 'asc' | 'desc',
+  ): ScrapedNewsInput[] {
+    return [...items].sort((left, right) => {
+      const leftTime = left.publishedAt?.getTime() ?? 0;
+      const rightTime = right.publishedAt?.getTime() ?? 0;
+
+      return sortOrder === 'asc' ? leftTime - rightTime : rightTime - leftTime;
+    });
   }
 
   private extractPreferredLink(contentHtml: string, fallback: string): string {
@@ -127,7 +202,8 @@ export class RssScraper implements NewsScraper {
     if (
       normalizedSummary &&
       !this.isGooglePlaceholderText(normalizedSummary) &&
-      normalizedSummary.toLowerCase() !== this.normalizeText(title).toLowerCase()
+      normalizedSummary.toLowerCase() !==
+        this.normalizeText(title).toLowerCase()
     ) {
       return normalizedSummary;
     }
@@ -170,7 +246,10 @@ export class RssScraper implements NewsScraper {
       return false;
     }
 
-    return /(^|\.)google\./i.test(normalized) || normalized.includes('news.google.com');
+    return (
+      /(^|\.)google\./i.test(normalized) ||
+      normalized.includes('news.google.com')
+    );
   }
 
   private isGooglePlaceholderTitle(value: string): boolean {
@@ -179,7 +258,9 @@ export class RssScraper implements NewsScraper {
       return false;
     }
 
-    return normalized === 'google news' || normalized.startsWith('google news ');
+    return (
+      normalized === 'google news' || normalized.startsWith('google news ')
+    );
   }
 
   private isGooglePlaceholderText(value: string): boolean {
@@ -190,7 +271,9 @@ export class RssScraper implements NewsScraper {
 
     return (
       normalized.includes('comprehensive up-to-date news coverage') ||
-      normalized.includes('aggregated from sources all over the world by google news') ||
+      normalized.includes(
+        'aggregated from sources all over the world by google news',
+      ) ||
       normalized === 'google news'
     );
   }
