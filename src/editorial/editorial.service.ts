@@ -88,6 +88,16 @@ interface ResolvedTopicCluster {
   sources: Array<NewsItem | Record<string, unknown>>;
 }
 
+interface EditorialTopicSummary {
+  id: string;
+  theme: string;
+  category: NewsCategory | string;
+  tone: string;
+  proposalCount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export class EditorialReviewQueryDto {
   @IsOptional()
   @IsEnum(EDITORIAL_REVIEW_STATUSES)
@@ -203,6 +213,62 @@ export class EditorialService {
       theme: saved.theme,
       category: saved.category,
     };
+  }
+
+  async listTopics(): Promise<EditorialTopicSummary[]> {
+    const topics = await this.topicClusterRepository.find({
+      order: { updatedAt: 'DESC' },
+      take: 100,
+    });
+    const topicIds = topics.map((topic) => topic.id);
+    const proposalCounts = await this.getProposalCountsByTopicId(topicIds);
+    const summaries = topics.map((topic) => ({
+      id: topic.id,
+      theme: topic.theme,
+      category: topic.category,
+      tone: topic.tone,
+      proposalCount: proposalCounts.get(topic.id) ?? 0,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
+    }));
+
+    const orphanProposalTopics = await this.topicProposalRepository
+      .createQueryBuilder('proposal')
+      .select('proposal.topicId', 'id')
+      .addSelect('MAX(proposal.theme)', 'theme')
+      .addSelect('MAX(proposal.tone)', 'tone')
+      .addSelect('COUNT(proposal.id)', 'proposalCount')
+      .addSelect('MAX(proposal.updatedAt)', 'updatedAt')
+      .where(topicIds.length > 0 ? 'proposal.topicId NOT IN (:...topicIds)' : '1 = 1', {
+        topicIds,
+      })
+      .groupBy('proposal.topicId')
+      .orderBy('MAX(proposal.updatedAt)', 'DESC')
+      .limit(100)
+      .getRawMany<{
+        id: string;
+        theme: string;
+        tone: string;
+        proposalCount: string;
+        updatedAt: Date;
+      }>();
+
+    return [
+      ...summaries,
+      ...orphanProposalTopics.map((topic) => ({
+        id: topic.id,
+        theme: topic.theme || topic.id,
+        category: 'sin_categoria',
+        tone: topic.tone || 'informativo',
+        proposalCount: Number(topic.proposalCount ?? 0),
+        updatedAt: topic.updatedAt,
+      })),
+    ].sort((left, right) => {
+      const leftTime = left.updatedAt ? new Date(left.updatedAt).getTime() : 0;
+      const rightTime = right.updatedAt ? new Date(right.updatedAt).getTime() : 0;
+
+      return rightTime - leftTime;
+    });
   }
 
   async generateTopicProposals(
@@ -366,6 +432,26 @@ export class EditorialService {
       where: { topicId: topicId.trim() },
       order: { proposalIndex: 'ASC' },
     });
+  }
+
+  private async getProposalCountsByTopicId(
+    topicIds: string[],
+  ): Promise<Map<string, number>> {
+    if (topicIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await this.topicProposalRepository
+      .createQueryBuilder('proposal')
+      .select('proposal.topicId', 'topicId')
+      .addSelect('COUNT(proposal.id)', 'proposalCount')
+      .where('proposal.topicId IN (:...topicIds)', { topicIds })
+      .groupBy('proposal.topicId')
+      .getRawMany<{ topicId: string; proposalCount: string }>();
+
+    return new Map(
+      rows.map((row) => [row.topicId, Number(row.proposalCount ?? 0)]),
+    );
   }
 
   async sendTopicProposalToWordpressDraft(

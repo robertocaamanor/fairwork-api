@@ -44,6 +44,12 @@ export class EditorialController {
     return this.editorialService.createTopic(dto, req.user.sub);
   }
 
+  @Get('topics')
+  @UseGuards(JwtAuthGuard)
+  listTopics() {
+    return this.editorialService.listTopics();
+  }
+
   @Post('topics/:id/proposals')
   @UseGuards(JwtAuthGuard)
   createTopicProposals(
