@@ -11,6 +11,7 @@ import { FotechScraper } from './scrapers/fotech.scraper';
 import { BiobioScraper } from './scrapers/biobio.scraper';
 import { ArticleResolverService } from './services/article-resolver.service';
 import { PuppeteerResolverService } from './services/puppeteer-resolver.service';
+import { NewsSourceSeederService } from './services/news-source-seeder.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([NewsItem, NewsSource])],
@@ -24,7 +25,8 @@ import { PuppeteerResolverService } from './services/puppeteer-resolver.service'
     BiobioScraper,
     ArticleResolverService,
     PuppeteerResolverService,
+    NewsSourceSeederService,
   ],
-  exports: [NewsService],
+  exports: [NewsService, NewsSourceSeederService],
 })
 export class NewsModule {}

@@ -22,6 +22,7 @@ import { FotechScraper } from './scrapers/fotech.scraper';
 import { BiobioScraper } from './scrapers/biobio.scraper';
 import { ScrapedNewsInput } from './scrapers/scraper.interface';
 import { ArticleResolverService } from './services/article-resolver.service';
+import { NewsSourceSeederService } from './services/news-source-seeder.service';
 import { normalizeDate } from '../common/utils/date.utils';
 
 @Injectable()
@@ -39,18 +40,17 @@ export class NewsService {
     private readonly fotechScraper: FotechScraper,
     private readonly biobioScraper: BiobioScraper,
     private readonly articleResolverService: ArticleResolverService,
+    private readonly newsSourceSeederService: NewsSourceSeederService,
   ) {}
 
-  async getLatestGroupedByCategory(filter: NewsFilterDto = {}): Promise<
-    Record<NewsCategory, NewsItem[]>
-  > {
+  async getLatestGroupedByCategory(
+    filter: NewsFilterDto = {},
+  ): Promise<Record<NewsCategory, NewsItem[]>> {
     const grouped: Record<NewsCategory, NewsItem[]> = {} as Record<
       NewsCategory,
       NewsItem[]
     >;
-    const categories = filter.category
-      ? [filter.category]
-      : NEWS_CATEGORIES;
+    const categories = filter.category ? [filter.category] : NEWS_CATEGORIES;
     const take = filter.limit ?? 20;
 
     for (const category of categories) {
@@ -157,8 +157,9 @@ export class NewsService {
     }
 
     if (queryParts.length > 0) {
-      const searchClauses = queryParts.map((_, index) =>
-        `(news.title ILIKE :term${index} OR news.summary ILIKE :term${index} OR news.content ILIKE :term${index})`,
+      const searchClauses = queryParts.map(
+        (_, index) =>
+          `(news.title ILIKE :term${index} OR news.summary ILIKE :term${index} OR news.content ILIKE :term${index})`,
       );
       qb.andWhere(`(${searchClauses.join(' OR ')})`);
 
@@ -185,8 +186,13 @@ export class NewsService {
     inserted: number;
     deduplicated: number;
   }> {
-    const activeSources = await this.newsSourceRepository.find({ where: { enabled: true } });
-    const combinedItems: Array<{ source: NewsSource; item: ScrapedNewsInput }> = [];
+    await this.newsSourceSeederService.seedSources();
+
+    const activeSources = await this.newsSourceRepository.find({
+      where: { enabled: true },
+    });
+    const combinedItems: Array<{ source: NewsSource; item: ScrapedNewsInput }> =
+      [];
     let inserted = 0;
     let deduplicated = 0;
 
@@ -198,12 +204,14 @@ export class NewsService {
     }
 
     combinedItems.sort((left, right) => {
-      const leftTime = left.item.publishedAt instanceof Date
-        ? left.item.publishedAt.getTime()
-        : 0;
-      const rightTime = right.item.publishedAt instanceof Date
-        ? right.item.publishedAt.getTime()
-        : 0;
+      const leftTime =
+        left.item.publishedAt instanceof Date
+          ? left.item.publishedAt.getTime()
+          : 0;
+      const rightTime =
+        right.item.publishedAt instanceof Date
+          ? right.item.publishedAt.getTime()
+          : 0;
 
       return rightTime - leftTime;
     });
@@ -263,7 +271,9 @@ export class NewsService {
         continue;
       }
 
-      await this.newsItemRepository.save(this.newsItemRepository.merge(item, patch));
+      await this.newsItemRepository.save(
+        this.newsItemRepository.merge(item, patch),
+      );
       updated += 1;
     }
 
@@ -284,7 +294,7 @@ export class NewsService {
     unchanged: number;
   }> {
     const take = Math.min(limit, 2000);
-    
+
     // Buscar noticias con fechas problemáticas o null
     const items = await this.newsItemRepository
       .createQueryBuilder('news')
@@ -306,15 +316,22 @@ export class NewsService {
       if (!currentDate) {
         needsFix = true;
         this.logger.warn(`Item ${item.id} tiene publishedAt null`);
-      } else if (!(currentDate instanceof Date) || isNaN(currentDate.getTime())) {
+      } else if (
+        !(currentDate instanceof Date) ||
+        isNaN(currentDate.getTime())
+      ) {
         needsFix = true;
         this.logger.warn(`Item ${item.id} tiene publishedAt inválido`);
       } else if (currentDate > oneDayFromNow) {
         needsFix = true;
-        this.logger.warn(`Item ${item.id} tiene fecha futura: ${currentDate.toISOString()}`);
+        this.logger.warn(
+          `Item ${item.id} tiene fecha futura: ${currentDate.toISOString()}`,
+        );
       } else if (currentDate < minValidDate) {
         needsFix = true;
-        this.logger.warn(`Item ${item.id} tiene fecha muy antigua: ${currentDate.toISOString()}`);
+        this.logger.warn(
+          `Item ${item.id} tiene fecha muy antigua: ${currentDate.toISOString()}`,
+        );
       }
 
       if (!needsFix) {
@@ -382,7 +399,11 @@ export class NewsService {
     const bestContent = this.getBestContentForN8n(item);
     const hasStrongContent = bestContent.length >= 400;
 
-    if (this.isGoogleNewsIntermediateUrl(item.originalUrl) && !hasRealResolvedUrl && !hasStrongContent) {
+    if (
+      this.isGoogleNewsIntermediateUrl(item.originalUrl) &&
+      !hasRealResolvedUrl &&
+      !hasStrongContent
+    ) {
       this.logger.warn(
         `No se pudo resolver URL final para ${id}. Se enviara fallback limpio con title/summary para no perder la automatizacion.`,
       );
@@ -457,13 +478,15 @@ export class NewsService {
   }
 
   async getForN8n(): Promise<NewsItem[]> {
-    return this.newsItemRepository.find({
-      where: {
-        status: 'new',
-      },
-      order: { score: 'DESC', publishedAt: 'DESC', createdAt: 'DESC' },
-      take: 200,
-    }).then((items) => items.filter((item) => item.score >= 70));
+    return this.newsItemRepository
+      .find({
+        where: {
+          status: 'new',
+        },
+        order: { score: 'DESC', publishedAt: 'DESC', createdAt: 'DESC' },
+        take: 200,
+      })
+      .then((items) => items.filter((item) => item.score >= 70));
   }
 
   private async scrapeSource(source: NewsSource): Promise<ScrapedNewsInput[]> {
@@ -503,10 +526,13 @@ export class NewsService {
       status: 'new',
     });
 
-    const enriched = await this.articleResolverService.resolveAndEnrich(baseEntity);
+    const enriched =
+      await this.articleResolverService.resolveAndEnrich(baseEntity);
     const persistable = this.buildPersistableNewsPatch(baseEntity, enriched);
 
-    const normalizedTitle = this.normalizeTitle(persistable.title || item.title || '');
+    const normalizedTitle = this.normalizeTitle(
+      persistable.title || item.title || '',
+    );
     const duplicateQb = this.newsItemRepository
       .createQueryBuilder('news')
       .select(['news.id'])
@@ -521,12 +547,15 @@ export class NewsService {
     }
 
     if (normalizedTitle) {
-      duplicateQb.orWhere('regexp_replace(lower(news.title), :regex, :replace, :flags) = :normalizedTitle', {
-        regex: '[^a-z0-9]+',
-        replace: '',
-        flags: 'g',
-        normalizedTitle,
-      });
+      duplicateQb.orWhere(
+        'regexp_replace(lower(news.title), :regex, :replace, :flags) = :normalizedTitle',
+        {
+          regex: '[^a-z0-9]+',
+          replace: '',
+          flags: 'g',
+          normalizedTitle,
+        },
+      );
     }
 
     const existing = await duplicateQb.getOne();
@@ -537,7 +566,11 @@ export class NewsService {
     const score = this.calculateScore({
       title: persistable.title || item.title,
       summary: persistable.summary || item.summary,
-      content: persistable.cleanContent || persistable.fullContent || persistable.content || item.content,
+      content:
+        persistable.cleanContent ||
+        persistable.fullContent ||
+        persistable.content ||
+        item.content,
       imageUrl: persistable.imageUrl || item.imageUrl,
     });
     const entity = this.newsItemRepository.create({
@@ -574,10 +607,16 @@ export class NewsService {
       title: this.pickBestTitle(merged.title, current.title),
       summary: this.pickBestText(merged.summary, current.summary),
       content: this.pickBestArticleContent(merged) || current.content,
-      fullContent: this.hasUsefulContent(merged.fullContent) ? merged.fullContent : current.fullContent,
-      cleanContent: this.hasUsefulContent(merged.cleanContent) ? merged.cleanContent : current.cleanContent,
+      fullContent: this.hasUsefulContent(merged.fullContent)
+        ? merged.fullContent
+        : current.fullContent,
+      cleanContent: this.hasUsefulContent(merged.cleanContent)
+        ? merged.cleanContent
+        : current.cleanContent,
       resolvedUrl: safeResolvedUrl,
-      resolvedSourceDomain: safeResolvedUrl ? merged.resolvedSourceDomain : current.resolvedSourceDomain,
+      resolvedSourceDomain: safeResolvedUrl
+        ? merged.resolvedSourceDomain
+        : current.resolvedSourceDomain,
       extractedImageUrl: this.isPlaceholderImageUrl(merged.extractedImageUrl)
         ? undefined
         : merged.extractedImageUrl,
@@ -587,13 +626,21 @@ export class NewsService {
         current.imageUrl,
       ),
       author: merged.author || current.author,
-      publishedAt: normalizeDate(merged.publishedAt || current.publishedAt, `${current.sourceName}:${current.title}`),
+      publishedAt: normalizeDate(
+        merged.publishedAt || current.publishedAt,
+        `${current.sourceName}:${current.title}`,
+      ),
       rawPublishedAt: merged.rawPublishedAt || current.rawPublishedAt,
     };
   }
 
   private pickBestArticleContent(item: Partial<NewsItem>): string | undefined {
-    const candidates = [item.cleanContent, item.fullContent, item.content, item.summary];
+    const candidates = [
+      item.cleanContent,
+      item.fullContent,
+      item.content,
+      item.summary,
+    ];
 
     for (const candidate of candidates) {
       const normalized = this.stripHtmlToText(candidate ?? '');
@@ -607,7 +654,9 @@ export class NewsService {
     return undefined;
   }
 
-  private pickBestText(...values: Array<string | undefined>): string | undefined {
+  private pickBestText(
+    ...values: Array<string | undefined>
+  ): string | undefined {
     for (const value of values) {
       const normalized = this.stripHtmlToText(value ?? '');
       if (!normalized || this.isGooglePlaceholderText(normalized)) {
@@ -633,7 +682,9 @@ export class NewsService {
     return this.stripHtmlToText(values.find(Boolean) ?? 'Sin titulo');
   }
 
-  private pickBestImageUrl(...values: Array<string | undefined>): string | undefined {
+  private pickBestImageUrl(
+    ...values: Array<string | undefined>
+  ): string | undefined {
     for (const value of values) {
       const normalized = (value ?? '').trim();
       if (!normalized || this.isPlaceholderImageUrl(normalized)) {
@@ -680,7 +731,12 @@ export class NewsService {
   }
 
   private getBestContentForN8n(item: NewsItem): string {
-    const candidates = [item.cleanContent, item.fullContent, item.content, item.summary];
+    const candidates = [
+      item.cleanContent,
+      item.fullContent,
+      item.content,
+      item.summary,
+    ];
 
     for (const candidate of candidates) {
       const normalized = this.stripHtmlToText(candidate ?? '');
@@ -688,7 +744,9 @@ export class NewsService {
         continue;
       }
 
-      if (/^No se pudo extraer contenido principal desde\s+/i.test(normalized)) {
+      if (
+        /^No se pudo extraer contenido principal desde\s+/i.test(normalized)
+      ) {
         continue;
       }
 
@@ -717,7 +775,10 @@ export class NewsService {
 
   private shouldEnrichBeforeSendToN8n(item: NewsItem): boolean {
     if (this.isLikelyRssSource(item.sourceUrl)) {
-      return !this.hasUsefulContent(item.fullContent) || !this.hasUsefulContent(item.cleanContent);
+      return (
+        !this.hasUsefulContent(item.fullContent) ||
+        !this.hasUsefulContent(item.cleanContent)
+      );
     }
 
     return !this.hasUsefulContent(item.cleanContent);
@@ -801,7 +862,8 @@ export class NewsService {
   private calculateScore(
     item: Pick<ScrapedNewsInput, 'title' | 'summary' | 'content' | 'imageUrl'>,
   ): number {
-    const text = `${item.title} ${item.summary ?? ''} ${item.content ?? ''}`.toLowerCase();
+    const text =
+      `${item.title} ${item.summary ?? ''} ${item.content ?? ''}`.toLowerCase();
 
     const strongKeywords = [
       'mega',
@@ -815,7 +877,13 @@ export class NewsService {
       'festival',
       'fiebre de baile',
     ];
-    const mediumKeywords = ['estreno', 'final', 'confirmó', 'anunció', 'polémica'];
+    const mediumKeywords = [
+      'estreno',
+      'final',
+      'confirmó',
+      'anunció',
+      'polémica',
+    ];
 
     let score = 0;
 
@@ -838,7 +906,9 @@ export class NewsService {
 
   private hasUsefulContent(content?: string | null): boolean {
     const normalized = this.stripHtmlToText(content ?? '');
-    return normalized.length >= 120 && !this.isGooglePlaceholderText(normalized);
+    return (
+      normalized.length >= 120 && !this.isGooglePlaceholderText(normalized)
+    );
   }
 
   private isGooglePlaceholderTitle(value?: string | null): boolean {
@@ -847,7 +917,9 @@ export class NewsService {
       return false;
     }
 
-    return normalized === 'google news' || normalized.startsWith('google news ');
+    return (
+      normalized === 'google news' || normalized.startsWith('google news ')
+    );
   }
 
   private isGooglePlaceholderText(value?: string | null): boolean {
@@ -858,7 +930,9 @@ export class NewsService {
 
     return (
       normalized.includes('comprehensive up-to-date news coverage') ||
-      normalized.includes('aggregated from sources all over the world by google news') ||
+      normalized.includes(
+        'aggregated from sources all over the world by google news',
+      ) ||
       normalized === 'google news'
     );
   }
