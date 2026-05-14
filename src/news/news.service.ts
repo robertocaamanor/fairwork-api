@@ -21,6 +21,7 @@ import { GenericWordpressScraper } from './scrapers/generic-wordpress.scraper';
 import { FotechScraper } from './scrapers/fotech.scraper';
 import { BiobioScraper } from './scrapers/biobio.scraper';
 import { ScrapedNewsInput } from './scrapers/scraper.interface';
+import { isExcludedFromGoogleNewsInspector } from './scrapers/seed-source-coverage';
 import { ArticleResolverService } from './services/article-resolver.service';
 import { NewsSourceSeederService } from './services/news-source-seeder.service';
 import { normalizeDate } from '../common/utils/date.utils';
@@ -714,6 +715,10 @@ export class NewsService {
   }
 
   private isGoogleAttributedItem(item: Partial<NewsItem>): boolean {
+    if (isExcludedFromGoogleNewsInspector(item.sourceName ?? '')) {
+      return false;
+    }
+
     const hasUnresolvedGoogleIntermediate =
       this.isGoogleNewsIntermediateUrl(item.originalUrl) &&
       (!item.resolvedUrl || this.isGoogleNewsIntermediateUrl(item.resolvedUrl));
