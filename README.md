@@ -190,11 +190,13 @@ Esto ocurre dentro del `SchedulerModule`, asi que no depende del endpoint `POST 
 1. Crea un nuevo proyecto en Railway y conecta este repositorio.
 2. Agrega un servicio PostgreSQL dentro del mismo proyecto.
 3. En el servicio de la API define estas variables:
-  - `DATABASE_URL=${{Postgres.DATABASE_URL}}`
-  - `DATABASE_SSL=true`
-  - `PORT=${{RAILWAY_TCP_PROXY_PORT}}` o deja que Railway inyecte `PORT` automaticamente.
-  - `FRONTEND_URL=https://tu-frontend.railway.app`
-  - `N8N_URL` y `N8N_WEBHOOK_URL` segun tu flujo.
+
+- `DATABASE_URL=${{Postgres.DATABASE_URL}}`
+- `DATABASE_SSL=true`
+- `PORT=${{RAILWAY_TCP_PROXY_PORT}}` o deja que Railway inyecte `PORT` automaticamente.
+- `FRONTEND_URL=https://tu-frontend.railway.app`
+- `N8N_URL` y `N8N_WEBHOOK_URL` segun tu flujo.
+
 4. Railway detectara el `Dockerfile` y construira la imagen automaticamente.
 5. Una vez desplegado, abre la URL publica y verifica que responda `Hello World!` en `/`.
 
@@ -251,6 +253,7 @@ npm run seed
 - `PATCH /news/:id/status`
   - Cambia estado de una noticia.
   - Body:
+
   ```json
   {
     "status": "selected"
@@ -265,6 +268,7 @@ npm run seed
 - `POST /sources`
   - Crea fuente.
   - Body ejemplo:
+
   ```json
   {
     "name": "Fotech",
@@ -295,6 +299,15 @@ npm run seed
   - Crea revision editorial desde propuesta n8n.
   - Si ya existe revision activa para `newsId` u `originalUrl`, devuelve la existente.
 
+- `POST /editorial/topics/:id/proposals`
+  - Persiste propuestas generadas por el workflow n8n `generate-topic-proposals`.
+  - Requiere JWT: `Authorization: Bearer <TOKEN>`.
+  - `:id` debe coincidir con `topicId` en el body.
+  - Guarda de forma idempotente por `topicId + proposalIndex`, por lo que un reintento de n8n actualiza las propuestas del mismo topico sin duplicarlas.
+
+- `GET /editorial/topics/:id/proposals`
+  - Lista propuestas guardadas para revision editorial frontend.
+
 - `GET /editorial/reviews?status=pending_review|approved|rejected|draft_created`
   - Lista revisiones por estado y soporta filtros (`category`, `minScore`, `limit`).
 
@@ -309,6 +322,15 @@ npm run seed
 
 - `PATCH /editorial/reviews/:id/published`
   - Marca revision como `draft_created` con datos de WordPress (`wordpressPostId`, `wordpressLink`).
+
+- `POST /editorial/reviews/:id/wordpress-draft`
+  - Crea un borrador en WordPress desde una revision editorial.
+  - Requiere permiso de envio a n8n o admin.
+  - Envia `title`, `content`, `excerpt` y `status: "draft"` a `/wp-json/wp/v2/posts`.
+
+- `POST /editorial/topics/:topicId/proposals/:proposalId/wordpress-draft`
+  - Crea un borrador en WordPress desde una propuesta generada por topico.
+  - Actualiza la propuesta local con `wordpressPostId`, `wordpressLink` y `status: "draft_created"`.
 
 - `DELETE /editorial/reviews/:id`
   - Elimina revision (limpieza local).
@@ -329,8 +351,9 @@ npm run seed
 ## Integracion con n8n
 
 1. Crea un workflow con nodo `HTTP Request` (GET):
-  - Si n8n corre local: `http://localhost:3000/news/n8n`
-  - Si n8n corre en Docker: `http://host.docker.internal:3000/news/n8n`
+
+- Si n8n corre local: `http://localhost:3000/news/n8n`
+- Si n8n corre en Docker: `http://host.docker.internal:3000/news/n8n`
 
 2. Itera resultados y procesa destino (Slack, DB, webhook, etc).
 
@@ -338,8 +361,9 @@ npm run seed
    - `PATCH /news/:id/status` con body `{"status":"sent_to_n8n"}`
 
 4. Envio inmediato desde frontend monitor:
-  - `POST /news/:id/send-to-n8n`
-  - El frontend puede usar este endpoint para disparar el workflow de n8n en tiempo real.
+
+- `POST /news/:id/send-to-n8n`
+- El frontend puede usar este endpoint para disparar el workflow de n8n en tiempo real.
 
 ### Enriquecimiento antes de n8n
 
@@ -392,12 +416,173 @@ Si falla el enriquecimiento de una noticia, el scraping global no se rompe y con
 
 ## Flujo editorial
 
+### Flujo actual compatible
+
 1. n8n crea propuesta en `POST /editorial/reviews`.
 2. Frontend lista `pending_review`.
 3. Editor aprueba/rechaza.
 4. n8n lee `GET /editorial/reviews/approved`.
 5. n8n crea borrador en WordPress.
 6. n8n marca `PATCH /editorial/reviews/:id/published`.
+
+### Evolucion n8n recomendada
+
+El workflow existente no debe rehacerse desde cero. La migracion recomendada es incremental:
+
+1. `generate-topic-proposals`: recibe un cluster tematico, usa Gemini para generar hasta 5 propuestas y las guarda en el backend.
+2. Frontend editorial: revisa propuestas, compara enfoques y permite seleccion humana.
+3. Backend NestJS: crea el borrador WordPress seleccionado con `POST /wp-json/wp/v2/posts`.
+4. `send-selected-proposal-to-wordpress`: opcional. Solo conviene mantenerlo si se decide que n8n siga operando la publicacion.
+
+Nuevo payload esperado por n8n:
+
+```json
+{
+  "topicId": "rating-matinales-2026-05-14",
+  "theme": "Competencia de matinales y cambios de rating",
+  "sources": [
+    {
+      "title": "Titulo fuente 1",
+      "url": "https://medio.cl/noticia",
+      "sourceName": "Medio",
+      "summary": "Resumen o contenido limpio"
+    }
+  ],
+  "requestedProposals": 5,
+  "tone": "informativo"
+}
+```
+
+Respuesta JSON que debe producir Gemini y parsear n8n:
+
+```json
+{
+  "proposals": [
+    {
+      "titulo": "Enfoque editorial 1",
+      "bajada": "Resumen breve",
+      "contenido": "<!-- wp:paragraph --><p>Contenido Gutenberg...</p><!-- /wp:paragraph -->",
+      "social": {
+        "x": "Texto para X",
+        "instagram": "Caption Instagram",
+        "facebook": "Copy Facebook"
+      },
+      "gutenberg": {
+        "blocks": []
+      }
+    }
+  ]
+}
+```
+
+n8n debe persistir el resultado en:
+
+```http
+POST http://host.docker.internal:3000/editorial/topics/:topicId/proposals
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "topicId": "rating-matinales-2026-05-14",
+  "theme": "Competencia de matinales y cambios de rating",
+  "sources": [],
+  "requestedProposals": 5,
+  "tone": "informativo",
+  "proposals": []
+}
+```
+
+Para robustecer Gemini, el nodo parser debe validar JSON antes de llamar al backend. Si detecta `MAX_TOKENS`, JSON truncado o `Unterminated string`, debe reintentar con una version mas corta del prompt o pedir menos extension por propuesta.
+
+Para disparar la generacion desde el frontend/backend y reenviar el JWT a n8n:
+
+```http
+POST /editorial/topics/:topicId/generate-proposals
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "tone": "informativo",
+  "requestedProposals": 5
+}
+```
+
+El backend enviara al webhook `N8N_TOPIC_PROPOSALS_WEBHOOK_URL`:
+
+```json
+{
+  "topicId": "rating-matinales-2026-05-14",
+  "theme": "rating matinales 2026 05 14",
+  "category": "tv_chilena",
+  "tone": "informativo",
+  "requestedProposals": 5,
+  "createdByUserId": "uuid",
+  "jwt": "token",
+  "sources": [
+    {
+      "id": "uuid",
+      "title": "Titulo",
+      "summary": "Resumen",
+      "content": "Contenido limpio",
+      "sourceName": "Medio",
+      "originalUrl": "https://medio.cl/nota",
+      "publishedAt": "2026-05-14T00:00:00.000Z",
+      "category": "tv_chilena"
+    }
+  ]
+}
+```
+
+### Envio a WordPress desde NestJS
+
+Configura el backend con:
+
+```env
+WORDPRESS_BASE_URL=https://tvenserio.com
+WORDPRESS_JWT_TOKEN=
+WORDPRESS_USERNAME=
+WORDPRESS_APPLICATION_PASSWORD=
+```
+
+Puedes usar `WORDPRESS_JWT_TOKEN` si WordPress tiene autenticacion JWT, o `WORDPRESS_USERNAME` + `WORDPRESS_APPLICATION_PASSWORD` si usaras Application Passwords de WordPress.
+
+Para crear un borrador desde una propuesta nueva:
+
+```http
+POST /editorial/topics/:topicId/proposals/:proposalId/wordpress-draft
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+```
+
+Body opcional:
+
+```json
+{
+  "status": "draft",
+  "categories": [12],
+  "tags": [34, 35],
+  "featuredMedia": 123
+}
+```
+
+El backend enviara a WordPress:
+
+```json
+{
+  "title": "Titulo de la propuesta",
+  "content": "Contenido Gutenberg o HTML",
+  "excerpt": "Bajada o meta description",
+  "status": "draft"
+}
+```
 
 ## Ejemplos de busqueda
 

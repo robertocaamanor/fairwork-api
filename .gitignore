@@ -29,3 +29,5 @@ coverage
 
 # Misc
 *.tsbuildinfo
+
+n8n-generar-articulo-gemini-wordpress.json

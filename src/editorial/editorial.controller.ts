@@ -9,11 +9,21 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { RequireSendToN8n } from '../auth/auth.decorators';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import { CreateTopicProposalsDto } from './dto/create-topic-proposals.dto';
 import { CreateEditorialReviewDto } from './dto/create-editorial-review.dto';
+import { GenerateTopicProposalsDto } from './dto/generate-topic-proposals.dto';
 import { MarkEditorialPublishedDto } from './dto/mark-editorial-published.dto';
+import { SendWordpressDraftDto } from './dto/send-wordpress-draft.dto';
 import { UpdateEditorialReviewStatusDto } from './dto/update-editorial-review-status.dto';
 import { EditorialReviewQueryDto, EditorialService } from './editorial.service';
+import type { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 
 @Controller('editorial')
 export class EditorialController {
@@ -22,6 +32,52 @@ export class EditorialController {
   @Post('reviews')
   createReview(@Body() dto: CreateEditorialReviewDto) {
     return this.editorialService.createReview(dto);
+  }
+
+  @Post('topics/:id/proposals')
+  createTopicProposals(
+    @Param('id') id: string,
+    @Body() dto: CreateTopicProposalsDto,
+    @CurrentUser() user?: AuthenticatedUser,
+  ) {
+    return this.editorialService.createTopicProposals(id, dto, user);
+  }
+
+  @Post('topics/:id/generate-proposals')
+  @UseGuards(JwtAuthGuard)
+  async generateProposals(
+    @Param('id') topicId: string,
+    @Req() req: AuthenticatedRequest,
+    @Body() body: GenerateTopicProposalsDto,
+  ) {
+    const jwt = req.headers.authorization?.replace(/^Bearer\s+/i, '') || '';
+
+    return this.editorialService.generateTopicProposals({
+      topicId,
+      tone: body.tone ?? 'informativo',
+      requestedProposals: body.requestedProposals ?? 5,
+      jwt,
+      userId: req.user.sub,
+    });
+  }
+
+  @Get('topics/:id/proposals')
+  listTopicProposals(@Param('id') id: string) {
+    return this.editorialService.listTopicProposals(id);
+  }
+
+  @Post('topics/:topicId/proposals/:proposalId/wordpress-draft')
+  @RequireSendToN8n()
+  sendTopicProposalToWordpressDraft(
+    @Param('topicId') topicId: string,
+    @Param('proposalId', ParseIntPipe) proposalId: number,
+    @Body() dto: SendWordpressDraftDto,
+  ) {
+    return this.editorialService.sendTopicProposalToWordpressDraft(
+      topicId,
+      proposalId,
+      dto,
+    );
   }
 
   @Get('reviews')
@@ -58,6 +114,15 @@ export class EditorialController {
     @Body() dto: MarkEditorialPublishedDto,
   ) {
     return this.editorialService.markPublished(id, dto);
+  }
+
+  @Post('reviews/:id/wordpress-draft')
+  @RequireSendToN8n()
+  sendReviewToWordpressDraft(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SendWordpressDraftDto,
+  ) {
+    return this.editorialService.sendReviewToWordpressDraft(id, dto);
   }
 
   @Delete('reviews/:id')
