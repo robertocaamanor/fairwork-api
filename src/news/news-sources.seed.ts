@@ -52,10 +52,7 @@ const TV_CHANNELS_CHILE: string[] = [
   'CNTV Chile',
 ];
 
-const TV_PERSONALITIES_CHILE: string[] = [
-  'Disley Ramos',
-  'Cony Capelli',
-];
+const TV_PERSONALITIES_CHILE: string[] = ['Disley Ramos', 'Cony Capelli'];
 
 const MUSIC_ARTISTS: string[] = [
   'Dua Lipa',
@@ -183,168 +180,145 @@ const GOOGLE_NEWS_SEARCHES: GoogleNewsSearchDefinition[] = [
 
 export const LEGACY_FIXED_SOURCE_NAMES = [] as const;
 
-const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
+type DirectRssFeed = { rss: string; categoria: NewsSource['category'] };
+type DirectRssEntry = { nombre: string; feeds: DirectRssFeed[] };
+
+const DIRECT_RSS_CONFIG: DirectRssEntry[] = [
   {
-    name: 'Fotech Televisión',
-    url: 'https://www.fotech.cl/category/television/feed/',
-    type: 'rss' as const,
-    category: 'tv_chilena',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Fotech',
+    feeds: [
+      {
+        rss: 'https://www.fotech.cl/category/television/feed/',
+        categoria: 'tv_chilena',
+      },
+      {
+        rss: 'https://www.fotech.cl/tag/fiebre-de-baile/feed/',
+        categoria: 'fiebre_de_baile',
+      },
+    ],
   },
   {
-    name: 'Lima Limón',
-    url: 'https://www.limalimon.cl/feed/',
-    type: 'rss' as const,
-    category: 'tv_chilena',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Lima Limón',
+    feeds: [
+      { rss: 'https://www.limalimon.cl/feed/', categoria: 'tv_chilena' },
+      {
+        rss: 'https://www.limalimon.cl/categoria/fiebre-de-baile/feed/',
+        categoria: 'fiebre_de_baile',
+      },
+    ],
   },
   {
-    name: 'Ojo a la Tele',
-    url: 'https://ojoalatele.com/category/television/feed/',
-    type: 'rss' as const,
-    category: 'tv_chilena',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Ojo a la Tele',
+    feeds: [
+      {
+        rss: 'https://ojoalatele.com/category/television/feed/',
+        categoria: 'tv_chilena',
+      },
+    ],
   },
   {
-    name: 'Cooperativa Televisión',
-    url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_102__1.xml',
-    type: 'rss' as const,
-    category: 'tv_chilena',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Cooperativa',
+    feeds: [
+      {
+        rss: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_102__1.xml',
+        categoria: 'tv_chilena',
+      },
+      {
+        rss: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_11__1.xml',
+        categoria: 'musica',
+      },
+      {
+        rss: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_303__1.xml',
+        categoria: 'streaming',
+      },
+      {
+        rss: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_8___1.xml',
+        categoria: 'tecnologia',
+      },
+    ],
   },
   {
-    name: 'Variety TV',
-    url: 'https://variety.com/v/tv/feed/',
-    type: 'rss' as const,
-    category: 'tv_usa',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Variety',
+    feeds: [
+      { rss: 'https://variety.com/v/tv/feed/', categoria: 'tv_usa' },
+      { rss: 'https://variety.com/v/music/feed/', categoria: 'musica' },
+    ],
   },
   {
-    name: 'Rolling Stone TV & Movies',
-    url: 'https://www.rollingstone.com/tv-movies/feed/',
-    type: 'rss' as const,
-    category: 'tv_usa',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Rolling Stone',
+    feeds: [
+      {
+        rss: 'https://www.rollingstone.com/tv-movies/feed/',
+        categoria: 'tv_usa',
+      },
+      { rss: 'https://www.rollingstone.com/music/feed/', categoria: 'musica' },
+    ],
   },
   {
-    name: 'Variety Music',
-    url: 'https://variety.com/v/music/feed/',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Billboard',
+    feeds: [
+      { rss: 'https://www.billboard.com/c/music/feed/', categoria: 'musica' },
+    ],
   },
   {
-    name: 'Billboard Music',
-    url: 'https://www.billboard.com/c/music/feed/',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Portal Famosos',
+    feeds: [
+      {
+        rss: 'https://portalfamosos.com.br/category/a-list/musica/feed/',
+        categoria: 'musica',
+      },
+    ],
   },
   {
-    name: 'Rolling Stone Music',
-    url: 'https://www.rollingstone.com/music/feed/',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Portal Popline',
+    feeds: [{ rss: 'https://portalpopline.com.br/feed/', categoria: 'musica' }],
   },
   {
-    name: 'Portal Famosos Música',
-    url: 'https://portalfamosos.com.br/category/a-list/musica/feed/',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Folha F5',
+    feeds: [
+      {
+        rss: 'http://feeds.folha.uol.com.br/f5/musica/rss091.xml',
+        categoria: 'musica',
+      },
+    ],
   },
   {
-    name: 'Portal Popline',
-    url: 'https://portalpopline.com.br/feed/',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'The Guardian',
+    feeds: [
+      { rss: 'https://www.theguardian.com/music/rss', categoria: 'musica' },
+    ],
   },
   {
-    name: 'Cooperativa Música',
-    url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_11__1.xml',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: '9to5Google',
+    feeds: [{ rss: 'https://9to5google.com/feed/', categoria: 'tecnologia' }],
   },
   {
-    name: 'Folha F5 Música',
-    url: 'http://feeds.folha.uol.com.br/f5/musica/rss091.xml',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Xataka',
+    feeds: [
+      { rss: 'https://www.xataka.com/index.xml', categoria: 'tecnologia' },
+    ],
   },
   {
-    name: 'The Guardian Music',
-    url: 'https://www.theguardian.com/music/rss',
-    type: 'rss' as const,
-    category: 'musica',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: '9to5Mac',
+    feeds: [{ rss: 'https://9to5mac.com/feed/', categoria: 'tecnologia' }],
   },
   {
-    name: 'Cooperativa Streaming',
-    url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_303__1.xml',
-    type: 'rss' as const,
-    category: 'streaming',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
-  },
-  {
-    name: '9to5Google',
-    url: 'https://9to5google.com/feed/',
-    type: 'rss' as const,
-    category: 'tecnologia',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
-  },
-  {
-    name: 'Xataka',
-    url: 'https://www.xataka.com/index.xml',
-    type: 'rss' as const,
-    category: 'tecnologia',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
-  },
-  {
-    name: '9to5Mac',
-    url: 'https://9to5mac.com/feed/',
-    type: 'rss' as const,
-    category: 'tecnologia',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
-  },
-  {
-    name: 'Pisapapeles',
-    url: 'https://pisapapeles.net/feed/',
-    type: 'rss' as const,
-    category: 'tecnologia',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
-  },
-  {
-    name: 'Cooperativa Tecnología',
-    url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_8___1.xml',
-    type: 'rss' as const,
-    category: 'tecnologia',
-    enabled: true,
-    selectors: { maxAgeHours: '48' },
+    nombre: 'Pisapapeles',
+    feeds: [{ rss: 'https://pisapapeles.net/feed/', categoria: 'tecnologia' }],
   },
 ];
+
+const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> =
+  DIRECT_RSS_CONFIG.flatMap(({ nombre, feeds }) =>
+    feeds.map(({ rss, categoria }) => ({
+      name: nombre,
+      url: rss,
+      type: 'rss' as const,
+      category: categoria,
+      enabled: true,
+      selectors: { maxAgeHours: '48' },
+    })),
+  );
 
 export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
   const googleSources = GOOGLE_NEWS_SEARCHES.flatMap((definition) =>

@@ -33,13 +33,13 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
 
   private async upsertSeeds(): Promise<void> {
     const seeds = buildNewsSourceSeeds();
-    const seedNames = seeds
-      .map((seed) => seed.name)
-      .filter((name): name is string => typeof name === 'string');
+    const seedUrls = seeds
+      .map((seed) => seed.url)
+      .filter((url): url is string => typeof url === 'string');
 
     for (const seed of seeds) {
       const existing = await this.newsSourceRepository.findOne({
-        where: { name: seed.name },
+        where: { url: seed.url },
       });
 
       if (!existing) {
@@ -62,8 +62,8 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
       .update(NewsSource)
       .set({ enabled: false });
 
-    if (seedNames.length > 0) {
-      qb.where('name NOT IN (:...seedNames)', { seedNames });
+    if (seedUrls.length > 0) {
+      qb.where('url NOT IN (:...seedUrls)', { seedUrls });
     } else {
       qb.where('1=1');
     }

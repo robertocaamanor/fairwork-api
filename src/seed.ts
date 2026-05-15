@@ -54,7 +54,7 @@ async function runSeed() {
   const repo = dataSource.getRepository(NewsSource);
 
   for (const seed of buildNewsSourceSeeds()) {
-    const existing = await repo.findOne({ where: { name: seed.name } });
+    const existing = await repo.findOne({ where: { url: seed.url } });
     if (!existing) {
       await repo.save(repo.create(seed));
     } else {
