@@ -1,7 +1,26 @@
 import { NewsSourceType } from '../entities/news-source.entity';
 
 export const NON_GOOGLE_HTML_SOURCE_NAMES = [] as const;
-export const NON_GOOGLE_RSS_SOURCE_NAMES = [] as const;
+export const NON_GOOGLE_RSS_SOURCE_NAMES = [
+  'Fotech Televisión',
+  'Lima Limón',
+  'Ojo a la Tele',
+  'Cooperativa Televisión',
+  'Variety TV',
+  'Rolling Stone TV & Movies',
+  'Variety Music',
+  'Billboard Music',
+  'Rolling Stone Music',
+  'Portal Famosos Música',
+  'Portal Popline',
+  'Cooperativa Música',
+  'Cooperativa Streaming',
+  '9to5Google',
+  'Xataka',
+  '9to5Mac',
+  'Pisapapeles',
+  'Cooperativa Tecnología',
+] as const;
 export const NON_GOOGLE_WORDPRESS_SOURCE_NAMES = [] as const;
 
 export const NON_GOOGLE_SOURCE_NAMES_BY_TYPE: Readonly<
