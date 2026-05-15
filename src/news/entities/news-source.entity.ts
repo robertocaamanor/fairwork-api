@@ -20,6 +20,8 @@ export const NEWS_CATEGORIES = [
   'cine',
   'sanremo',
   'eurovision',
+  'vina_del_mar',
+  'coachella',
   'el_internado_mega',
   'vecinos_al_limite',
   'musica',
