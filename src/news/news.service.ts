@@ -29,6 +29,13 @@ import { normalizeDate } from '../common/utils/date.utils';
 @Injectable()
 export class NewsService {
   private readonly logger = new Logger(NewsService.name);
+  private scrapeRun?: Promise<{
+    sourcesProcessed: number;
+    inserted: number;
+    deduplicated: number;
+    skipped?: boolean;
+    message?: string;
+  }>;
 
   constructor(
     @InjectRepository(NewsItem)
@@ -183,6 +190,35 @@ export class NewsService {
   }
 
   async scrapeActiveSources(): Promise<{
+    sourcesProcessed: number;
+    inserted: number;
+    deduplicated: number;
+    skipped?: boolean;
+    message?: string;
+  }> {
+    if (this.scrapeRun) {
+      return {
+        sourcesProcessed: 0,
+        inserted: 0,
+        deduplicated: 0,
+        skipped: true,
+        message: 'Scraping ya esta en curso.',
+      };
+    }
+
+    const run = this.doScrapeActiveSources();
+    this.scrapeRun = run;
+
+    try {
+      return await run;
+    } finally {
+      if (this.scrapeRun === run) {
+        this.scrapeRun = undefined;
+      }
+    }
+  }
+
+  private async doScrapeActiveSources(): Promise<{
     sourcesProcessed: number;
     inserted: number;
     deduplicated: number;

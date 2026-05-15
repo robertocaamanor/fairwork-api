@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { NEWS_CATEGORIES } from './news-source.entity';
+import { NEWS_STORAGE_CATEGORIES } from './news-source.entity';
 import type { NewsCategory } from './news-source.entity';
 
 export const NEWS_STATUS = [
@@ -28,7 +28,7 @@ export class NewsItem {
   @Column({ length: 500 })
   sourceUrl: string;
 
-  @Column({ type: 'enum', enum: NEWS_CATEGORIES })
+  @Column({ type: 'enum', enum: NEWS_STORAGE_CATEGORIES })
   category: NewsCategory;
 
   @Column({ length: 500 })

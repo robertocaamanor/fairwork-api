@@ -13,12 +13,17 @@ export const NEWS_CATEGORIES = [
   'tv_chilena',
   'tv_internacional',
   'musica',
-  'farandula',
+  'tecnologia',
   'streaming',
   'radio',
   'fiebre_de_baile',
 ] as const;
 export type NewsCategory = (typeof NEWS_CATEGORIES)[number];
+
+export const NEWS_STORAGE_CATEGORIES = [
+  ...NEWS_CATEGORIES,
+  'farandula',
+] as const;
 
 @Entity('news_sources')
 export class NewsSource {
@@ -34,7 +39,7 @@ export class NewsSource {
   @Column({ type: 'enum', enum: NEWS_SOURCE_TYPES })
   type: NewsSourceType;
 
-  @Column({ type: 'enum', enum: NEWS_CATEGORIES })
+  @Column({ type: 'enum', enum: NEWS_STORAGE_CATEGORIES })
   category: NewsCategory;
 
   @Column({ default: true })

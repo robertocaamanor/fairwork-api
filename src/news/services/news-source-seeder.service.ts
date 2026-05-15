@@ -48,6 +48,13 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
       );
     }
 
+    await this.newsSourceRepository
+      .createQueryBuilder()
+      .update(NewsSource)
+      .set({ enabled: false })
+      .where('category = :category', { category: 'farandula' })
+      .execute();
+
     this.logger.log(`News sources seeded: ${seeds.length}`);
   }
 }

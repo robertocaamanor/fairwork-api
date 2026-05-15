@@ -23,8 +23,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'Pagina7 Entretencion',
       url: 'https://www.pagina7.cl/entretencion/',
       type: 'html',
-      category: 'farandula',
-      enabled: true,
+      category: 'tecnologia',
+      enabled: false,
       selectors: {
         linkPattern: '^https?://(www\\.)?pagina7\\.cl/entretencion/[^?#]+/?$',
         excludePattern: '/page/|/entretencion/$',
@@ -42,8 +42,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'TiempoX',
       url: 'https://www.tiempox.com/',
       type: 'html',
-      category: 'farandula',
-      enabled: true,
+      category: 'tecnologia',
+      enabled: false,
       selectors: {
         linkPattern:
           '^https?://(www\\.)?tiempox\\.com/[a-z-]+/\\d{4}/\\d{2}/\\d{2}/[^?#]+/?$',
@@ -69,8 +69,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'M360',
       url: 'https://www.m360.cl',
       type: 'html',
-      category: 'farandula',
-      enabled: true,
+      category: 'tecnologia',
+      enabled: false,
       selectors: {
         linkPattern:
           '^https?://(www\\.)?m360\\.cl/noticias/.+/\\d{4}-\\d{2}-\\d{2}/\\d+\\.html$',
@@ -148,8 +148,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'La Hora Entretención',
       url: 'https://lahora.cl/categoria/entretencion/',
       type: 'html',
-      category: 'farandula',
-      enabled: true,
+      category: 'tecnologia',
+      enabled: false,
       selectors: {
         linkPattern: '^https?://(www\\.)?lahora\\.cl/entretencion/[^?#]+/?$',
         excludePattern: '/page/|/categoria/|javascript:',
@@ -174,8 +174,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'Glamorama',
       url: 'https://www.lacuarta.com/glamorama/',
       type: 'html',
-      category: 'farandula',
-      enabled: true,
+      category: 'tecnologia',
+      enabled: false,
       selectors: {
         linkPattern:
           '^https?://(www\\.)?lacuarta\\.com/(glamorama|espectaculos)/[^?#]+/?$',
@@ -275,7 +275,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
     {
       name: 'Google News Television Chile',
       url: googleNewsSearchUrl(
-        '(television OR TV OR teleseries OR farandula) Chile',
+        '(television OR TV OR teleseries OR reality) Chile',
         'CL',
         'es-419',
       ),
@@ -305,6 +305,30 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       ),
       type: 'rss',
       category: 'streaming',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News Tecnologia Chile',
+      url: googleNewsSearchUrl(
+        '(android OR smartphones OR Google OR Samsung OR "inteligencia artificial" OR IA OR tecnologia) Chile',
+        'CL',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'tecnologia',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News Tecnologia Global',
+      url: googleNewsSearchUrl(
+        '(android OR smartphones OR Google OR Samsung OR "artificial intelligence" OR AI OR technology)',
+        'US',
+        'es-419',
+      ),
+      type: 'rss',
+      category: 'tecnologia',
       enabled: true,
       selectors: googleNewsSelectors,
     },
