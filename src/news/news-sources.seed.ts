@@ -209,6 +209,38 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     enabled: true,
     selectors: {},
   },
+  {
+    name: '9to5Google',
+    url: 'https://9to5google.com/feed/',
+    type: 'rss' as const,
+    category: 'tecnologia',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Xataka',
+    url: 'https://www.xataka.com/index.xml',
+    type: 'rss' as const,
+    category: 'tecnologia',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: '9to5Mac',
+    url: 'https://9to5mac.com/feed/',
+    type: 'rss' as const,
+    category: 'tecnologia',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Pisapapeles',
+    url: 'https://pisapapeles.net/feed/',
+    type: 'rss' as const,
+    category: 'tecnologia',
+    enabled: true,
+    selectors: {},
+  },
 ];
 
 export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
