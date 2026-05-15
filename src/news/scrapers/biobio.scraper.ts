@@ -14,9 +14,14 @@ interface BiobioArticle {
   post_content?: string;
   post_URL?: string;
   post_URL_https?: string;
-  post_image?: string;
+  post_image?: string | BiobioImage;
   raw_post_date?: string;
   post_date?: string;
+}
+
+interface BiobioImage {
+  URL?: string;
+  thumbnails?: Record<string, { URL?: string } | undefined>;
 }
 
 @Injectable()
@@ -42,7 +47,10 @@ export class BiobioScraper implements NewsScraper {
       return rawItems
         .map((article) => {
           const originalUrl =
-            this.normalizeUrl(article.post_URL_https ?? article.post_URL ?? '', source.url) ?? '';
+            this.normalizeUrl(
+              article.post_URL_https ?? article.post_URL ?? '',
+              source.url,
+            ) ?? '';
           const rawDate = article.raw_post_date ?? article.post_date;
           const title = this.stripHtml(article.post_title ?? '').trim();
           const publishedAt = normalizeDate(rawDate, `${source.name}:${title}`);
@@ -55,7 +63,7 @@ export class BiobioScraper implements NewsScraper {
             title,
             summary: this.stripHtml(article.post_excerpt ?? '').trim(),
             content: this.stripHtml(article.post_content ?? '').trim(),
-            imageUrl: (article.post_image ?? '').trim(),
+            imageUrl: this.extractImageUrl(article.post_image),
             originalUrl,
             publishedAt,
             rawPublishedAt,
@@ -63,7 +71,9 @@ export class BiobioScraper implements NewsScraper {
         })
         .filter((item) => item.title && item.originalUrl);
     } catch (error) {
-      this.logger.warn(`BioBio scrape failed for ${source.name}: ${String(error)}`);
+      this.logger.warn(
+        `BioBio scrape failed for ${source.name}: ${String(error)}`,
+      );
       return [];
     }
   }
@@ -76,7 +86,45 @@ export class BiobioScraper implements NewsScraper {
       .trim();
   }
 
+  private extractImageUrl(image: BiobioArticle['post_image']): string {
+    if (!image) {
+      return '';
+    }
 
+    if (typeof image === 'string') {
+      return this.normalizeImageUrl(image);
+    }
+
+    const candidates = [
+      image.thumbnails?.large?.URL,
+      image.thumbnails?.medium?.URL,
+      image.URL,
+      image.thumbnails?.social?.URL,
+      image.thumbnails?.thumbnail?.URL,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = this.normalizeImageUrl(candidate);
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    return '';
+  }
+
+  private normalizeImageUrl(raw?: string): string {
+    const value = (raw ?? '').trim();
+    if (!value) {
+      return '';
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+
+    return `https://media.biobiochile.cl/wp-content/uploads/${value.replace(/^\/+/, '')}`;
+  }
 
   private normalizeUrl(raw: string, base: string): string | undefined {
     if (!raw) {

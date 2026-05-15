@@ -126,6 +126,7 @@ export class HtmlScraper implements NewsScraper {
         imageNode.attr('srcset') ??
         '';
       const imageUrl = this.normalizeUrl(imageRaw.split(' ')[0], source.url);
+      const publishedAt = normalizeDate(null, `${source.name}:${title}`);
 
       visited.add(originalUrl);
       items.push({
@@ -135,6 +136,7 @@ export class HtmlScraper implements NewsScraper {
         title,
         imageUrl,
         originalUrl,
+        publishedAt,
       });
     });
 
