@@ -41,6 +41,22 @@ const GOOGLE_NEWS_SEARCH_LOCALES: GoogleNewsSearchLocale[] = [
   },
 ];
 
+const TV_CHANNELS_CHILE: string[] = [
+  'TVN Chile',
+  'Mega Chile',
+  'Chilevisión',
+  'Canal 13',
+  'La Red Chile',
+  'TV+',
+  'Telecanal',
+  'CNTV Chile',
+];
+
+const TV_PERSONALITIES_CHILE: string[] = [
+  'Disley Ramos',
+  'Cony Capelli',
+];
+
 const MUSIC_ARTISTS: string[] = [
   'Dua Lipa',
   'Tini Stoessel',
@@ -61,12 +77,18 @@ const MUSIC_ARTISTS: string[] = [
 ];
 
 const GOOGLE_NEWS_SEARCHES: GoogleNewsSearchDefinition[] = [
-  {
-    name: 'Television Chile',
-    category: 'tv_chilena',
-    queryEs: 'television chilena TVN Mega CHV Canal 13',
-    queryEn: 'Chilean television TVN Mega CHV Canal 13',
-  },
+  ...TV_CHANNELS_CHILE.map((channel) => ({
+    name: channel,
+    category: 'tv_chilena' as NewsSource['category'],
+    queryEs: channel,
+    queryEn: channel,
+  })),
+  ...TV_PERSONALITIES_CHILE.map((person) => ({
+    name: person,
+    category: 'tv_chilena' as NewsSource['category'],
+    queryEs: person,
+    queryEn: person,
+  })),
   {
     name: 'Fiebre de Baile',
     category: 'fiebre_de_baile',
