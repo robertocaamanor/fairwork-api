@@ -41,6 +41,25 @@ const GOOGLE_NEWS_SEARCH_LOCALES: GoogleNewsSearchLocale[] = [
   },
 ];
 
+const MUSIC_ARTISTS: string[] = [
+  'Dua Lipa',
+  'Tini Stoessel',
+  'Lali Esposito',
+  'Katy Perry',
+  'María Becerra',
+  'Ariana Grande',
+  'Demi Lovato',
+  'Kylie Minogue',
+  'Sabrina Carpenter',
+  'Megan Thee Stallion',
+  'Lizzo',
+  'Anitta',
+  'Ludmilla',
+  'Nicki Minaj',
+  'Emilia Mernes',
+  'Bebe Rexha',
+];
+
 const GOOGLE_NEWS_SEARCHES: GoogleNewsSearchDefinition[] = [
   {
     name: 'Television Chile',
@@ -72,6 +91,12 @@ const GOOGLE_NEWS_SEARCHES: GoogleNewsSearchDefinition[] = [
     queryEs: 'musica pop latina conciertos festivales',
     queryEn: 'latin pop music concerts festivals',
   },
+  ...MUSIC_ARTISTS.map((artist) => ({
+    name: artist,
+    category: 'musica' as NewsSource['category'],
+    queryEs: artist,
+    queryEn: artist,
+  })),
   {
     name: 'Streaming',
     category: 'streaming',
