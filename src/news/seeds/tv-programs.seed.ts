@@ -59,8 +59,14 @@ const PROGRAM_DEFINITIONS: ProgramDef[] = [
   {
     name: 'Mucho Gusto',
     categories: ['tv_chilena'],
-    queryEs: 'Mucho Gusto',
+    queryEs: 'Mucho Gusto Mega',
     queryEn: 'Mucho Gusto Mega morning show',
+  },
+  {
+    name: 'Detrás del Muro',
+    categories: ['tv_chilena'],
+    queryEs: 'Detrás del Muro Mega',
+    queryEn: 'Detrás del Muro Mega',
   },
 ];
 
