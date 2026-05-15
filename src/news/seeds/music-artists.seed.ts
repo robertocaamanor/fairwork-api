@@ -47,6 +47,20 @@ const ARTIST_NAMES: string[] = [
   'Nicki Minaj',
   'Emilia Mernes',
   'Bebe Rexha',
+  'Billie Eilish',
+  'María José Quintanilla',
+  'Alanys Lagos',
+  'Caro Molina',
+  'Zoe Gotusso',
+  'Fey',
+  'Paty Cantú',
+  'Belinda',
+  'Thalía',
+  'Paulina Rubio',
+  'Ana Torroja',
+  'Alejandra Guzmán',
+  'Gloria Trevi',
+  'Julieta Venegas'
 ];
 
 export const MUSIC_ARTISTS: GoogleSearchEntry[] = ARTIST_NAMES.map((name) => ({
