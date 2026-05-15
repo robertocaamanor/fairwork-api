@@ -83,13 +83,13 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
 
   const rssSources: Array<Partial<NewsSource>> = DIRECT_RSS.flatMap(
     ({ name, feeds }) =>
-      feeds.map(({ url, category }) => ({
+      feeds.map(({ url, category, selectors }) => ({
         name,
         url,
         type: 'rss' as const,
         category,
         enabled: true,
-        selectors: { maxAgeHours: '48' },
+        selectors: { maxAgeHours: '48', ...selectors },
       })),
   );
 

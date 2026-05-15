@@ -29,6 +29,7 @@ export class RssScraper implements NewsScraper {
       const maxAgeHours = this.parseMaxAgeHours(source.selectors?.maxAgeHours);
       const sortOrder = this.parseSortOrder(source.selectors?.sortOrder);
       const excludedDomains = this.parseExcludedDomains(source.selectors?.excludedDomains);
+      const includedUrlPatterns = this.parseIncludedUrlPatterns(source.selectors?.includedUrlPatterns);
 
       const filteredItems = (feed.items ?? [])
         .map((item) => {
@@ -83,7 +84,8 @@ export class RssScraper implements NewsScraper {
               item.publishedAt,
               maxAgeHours,
             ) &&
-            !this.isExcludedDomain(item.originalUrl, excludedDomains),
+            !this.isExcludedDomain(item.originalUrl, excludedDomains) &&
+            this.isIncludedUrl(item.originalUrl, includedUrlPatterns),
         );
 
       return this.sortByPublishedAt(filteredItems, sortOrder);
@@ -105,6 +107,16 @@ export class RssScraper implements NewsScraper {
       .filter((d) => d.length > 0);
   }
 
+  private parseIncludedUrlPatterns(raw: string | undefined): string[] {
+    if (!raw) {
+      return [];
+    }
+    return raw
+      .split(',')
+      .map((d) => d.trim())
+      .filter((d) => d.length > 0);
+  }
+
   private isExcludedDomain(url: string, excludedDomains: string[]): boolean {
     if (excludedDomains.length === 0) {
       return false;
@@ -117,6 +129,13 @@ export class RssScraper implements NewsScraper {
     } catch {
       return false;
     }
+  }
+
+  private isIncludedUrl(url: string, patterns: string[]): boolean {
+    if (patterns.length === 0) {
+      return true;
+    }
+    return patterns.some((pattern) => url.includes(pattern));
   }
 
   private parseMaxAgeHours(raw: string | undefined): number | undefined {

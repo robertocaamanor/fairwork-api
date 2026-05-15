@@ -31,6 +31,26 @@ export const DIRECT_RSS: DirectRssEntry[] = [
       { url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_8___1.xml',    category: 'tecnologia' },
     ],
   },
+  {
+    name: 'Bio-Bio Chile',
+    feeds: [
+      { 
+        url: 'https://www.biobiochile.cl/static/feed-rss', 
+        category: 'tv_chilena',
+        selectors: { includedUrlPatterns: '/lista/categorias/tv' }
+      },
+      { 
+        url: 'https://www.biobiochile.cl/static/feed-rss', 
+        category: 'musica',
+        selectors: { includedUrlPatterns: '/lista/categorias/musica' }
+      },
+      { 
+        url: 'https://www.biobiochile.cl/static/feed-rss', 
+        category: 'cine',
+        selectors: { includedUrlPatterns: '/lista/categorias/cine-y-series' }
+      },
+    ],
+  },
 
   // --- TV Italiana ---
   {
@@ -95,6 +115,12 @@ export const DIRECT_RSS: DirectRssEntry[] = [
     name: 'Radio Italia',
     feeds: [
       { url: 'https://www.radioitalia.it/rss.xml', category: 'musica' },
+    ],
+  },
+  {
+    name: 'Mix 98.7',
+    feeds: [
+      { url: 'https://mix987.com/category/music-news/feed/', category: 'musica' },
     ],
   },
 
