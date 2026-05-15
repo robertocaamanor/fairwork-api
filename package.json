@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/seed.ts",
+    "clear:news": "ts-node -r tsconfig-paths/register clear-news.ts",
     "reset:google-news": "ts-node -r tsconfig-paths/register scripts/reset-google-news-sources.ts"
   },
   "dependencies": {
