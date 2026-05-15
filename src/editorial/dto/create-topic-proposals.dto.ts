@@ -7,11 +7,13 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
+import type { NewsCategory } from '../../news/entities/news-source.entity';
 
 export class TopicSourceDto {
   @IsOptional()
@@ -35,6 +37,12 @@ export class TopicSourceDto {
 }
 
 export class EditorialTopicProposalPayloadDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  order?: number;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)
@@ -47,6 +55,35 @@ export class EditorialTopicProposalPayloadDto {
   @IsOptional()
   @IsString()
   contenido?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  keyword?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(220)
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  meta_description?: string;
+
+  @IsOptional()
+  @IsString()
+  enfoque?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  categoria_sugerida?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  fuentes_usadas?: string[];
 
   @IsOptional()
   @IsObject()
@@ -68,16 +105,33 @@ export class CreateTopicProposalsDto {
   @MaxLength(240)
   theme: string;
 
+  @IsOptional()
+  @IsString()
+  category?: NewsCategory;
+
+  @IsOptional()
+  @IsUUID('4')
+  createdByUserId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('4', { each: true })
+  sourceNewsIds?: string[];
+
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(20)
   @ValidateNested({ each: true })
   @Type(() => TopicSourceDto)
-  sources: TopicSourceDto[];
+  sources?: TopicSourceDto[];
 
+  @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(5)
-  requestedProposals: number;
+  requestedProposals?: number;
 
   @IsOptional()
   @IsString()

@@ -438,11 +438,13 @@ export class EditorialService {
 
     const theme = dto.theme.trim();
     const tone = dto.tone?.trim() || 'informativo';
-    const sources = dto.sources.map((source) => ({ ...source }));
+    const sources = (dto.sources ?? []).map((source) => ({ ...source }));
+    const requestedProposals =
+      dto.requestedProposals ?? Math.min(dto.proposals.length, 5);
 
     const proposals = await Promise.all(
       dto.proposals.map(async (proposal, index) => {
-        const proposalIndex = index + 1;
+        const proposalIndex = proposal.order ?? index + 1;
         const existing = await this.topicProposalRepository.findOne({
           where: { topicId, proposalIndex },
         });
@@ -450,7 +452,7 @@ export class EditorialService {
           topicId,
           theme,
           sources,
-          requestedProposals: dto.requestedProposals,
+          requestedProposals,
           tone,
           proposalIndex,
           proposal: { ...proposal },
