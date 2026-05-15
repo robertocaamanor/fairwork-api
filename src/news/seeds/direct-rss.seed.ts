@@ -32,6 +32,14 @@ export const DIRECT_RSS: DirectRssEntry[] = [
     ],
   },
 
+  // --- TV Italiana ---
+  {
+    name: 'Rai News',
+    feeds: [
+      { url: 'https://www.rainews.it/rss/artiespettacolo', category: 'tv_italiana' },
+    ],
+  },
+
   // --- Música internacional ---
   {
     name: 'Variety',
