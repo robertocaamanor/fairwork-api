@@ -234,6 +234,22 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     selectors: {},
   },
   {
+    name: 'Folha F5 Música',
+    url: 'http://feeds.folha.uol.com.br/f5/musica/rss091.xml',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'The Guardian Music',
+    url: 'https://www.theguardian.com/music/rss',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+  {
     name: 'Cooperativa Streaming',
     url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_303__1.xml',
     type: 'rss' as const,

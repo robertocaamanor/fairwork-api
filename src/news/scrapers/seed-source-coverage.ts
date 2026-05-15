@@ -14,6 +14,8 @@ export const NON_GOOGLE_RSS_SOURCE_NAMES = [
   'Portal Famosos Música',
   'Portal Popline',
   'Cooperativa Música',
+  'Folha F5 Música',
+  'The Guardian Music',
   'Cooperativa Streaming',
   '9to5Google',
   'Xataka',
