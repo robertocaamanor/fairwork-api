@@ -275,6 +275,20 @@ export class NewsService {
     };
   }
 
+  async hasRecentNews(windowMinutes: number): Promise<boolean> {
+    const since = new Date(Date.now() - windowMinutes * 60 * 1000);
+    const count = await this.newsItemRepository
+      .createQueryBuilder('news')
+      .where('news.createdAt >= :since', { since })
+      .getCount();
+    return count > 0;
+  }
+
+  async hasAnyNews(): Promise<boolean> {
+    const count = await this.newsItemRepository.count();
+    return count > 0;
+  }
+
   async repairGoogleAttributedItems(limit = 100): Promise<{
     processed: number;
     updated: number;

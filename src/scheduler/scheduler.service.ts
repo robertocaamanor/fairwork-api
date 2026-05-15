@@ -22,13 +22,37 @@ export class SchedulerService implements OnApplicationBootstrap {
       return;
     }
 
-    setTimeout(() => {
-      void this.runNewsScraping('startup');
-    }, startupDelayMs);
+    // Si la DB está vacía al arrancar, ejecutar sin esperar el delay configurado
+    void this.newsService.hasAnyNews().then((hasNews) => {
+      if (!hasNews) {
+        this.logger.warn(
+          'No hay noticias en la base de datos. Ejecutando scraping de arranque inmediatamente...',
+        );
+        void this.runNewsScraping('startup');
+        return;
+      }
+
+      setTimeout(() => {
+        void this.runNewsScraping('startup');
+      }, startupDelayMs);
+    });
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleScheduledScraping(): Promise<void> {
+    // Si no hay noticias recientes (dentro de la ventana esperada), forzar scraping
+    // independientemente del intervalo configurado
+    const recentWindowMinutes = this.scrapeIntervalMinutes * 3;
+    const hasRecent = await this.newsService.hasRecentNews(recentWindowMinutes);
+
+    if (!hasRecent) {
+      this.logger.warn(
+        `No se encontraron noticias en los últimos ${recentWindowMinutes} minuto(s). Forzando scraping...`,
+      );
+      await this.runNewsScraping('cron');
+      return;
+    }
+
     if (!this.shouldRunCurrentMinute()) {
       return;
     }
