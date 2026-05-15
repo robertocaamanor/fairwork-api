@@ -28,6 +28,7 @@ export class RssScraper implements NewsScraper {
       const feed = await this.parser.parseURL(source.url);
       const maxAgeHours = this.parseMaxAgeHours(source.selectors?.maxAgeHours);
       const sortOrder = this.parseSortOrder(source.selectors?.sortOrder);
+      const excludedDomains = this.parseExcludedDomains(source.selectors?.excludedDomains);
 
       const filteredItems = (feed.items ?? [])
         .map((item) => {
@@ -81,7 +82,8 @@ export class RssScraper implements NewsScraper {
               item.rawPublishedAt,
               item.publishedAt,
               maxAgeHours,
-            ),
+            ) &&
+            !this.isExcludedDomain(item.originalUrl, excludedDomains),
         );
 
       return this.sortByPublishedAt(filteredItems, sortOrder);
@@ -90,6 +92,30 @@ export class RssScraper implements NewsScraper {
         `RSS scrape failed for ${source.name}: ${String(error)}`,
       );
       return [];
+    }
+  }
+
+  private parseExcludedDomains(raw: string | undefined): string[] {
+    if (!raw) {
+      return [];
+    }
+    return raw
+      .split(',')
+      .map((d) => d.trim().toLowerCase())
+      .filter((d) => d.length > 0);
+  }
+
+  private isExcludedDomain(url: string, excludedDomains: string[]): boolean {
+    if (excludedDomains.length === 0) {
+      return false;
+    }
+    try {
+      const hostname = new URL(url).hostname.toLowerCase();
+      return excludedDomains.some(
+        (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+      );
+    } catch {
+      return false;
     }
   }
 

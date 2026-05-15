@@ -36,6 +36,7 @@ const googleNewsRssUrl = (rawUrl: string): string => {
 const googleNewsSelectors = {
   maxAgeHours: '24',
   sortOrder: 'desc',
+  excludedDomains: 'tvenserio.com',
 };
 
 export const LEGACY_FIXED_SOURCE_NAMES = [
@@ -496,13 +497,24 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
     // ========== FIEBRE DE BAILE ==========
     {
       name: 'Google News Fiebre de Baile',
-      url: googleNewsSearchUrl('"Fiebre de Baile"', 7),
+      url: googleNewsSearchUrl('"Fiebre de Baile"', 30),
       type: 'rss',
       category: 'fiebre_de_baile',
       enabled: true,
       selectors: {
         ...googleNewsSelectors,
-        maxAgeHours: '168',
+        maxAgeHours: '720',
+      },
+    },
+    {
+      name: 'Google News Fiebre de Baile CHV',
+      url: googleNewsSearchUrl('"Fiebre de Baile" (CHV OR Chilevisión OR rating OR estelar OR baile)', 30),
+      type: 'rss',
+      category: 'fiebre_de_baile',
+      enabled: true,
+      selectors: {
+        ...googleNewsSelectors,
+        maxAgeHours: '720',
       },
     },
   ];
