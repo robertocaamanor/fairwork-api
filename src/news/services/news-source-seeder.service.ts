@@ -54,19 +54,31 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
       );
     }
 
-    await this.newsSourceRepository
+    const legacyNames = [...LEGACY_FIXED_SOURCE_NAMES];
+    const disabledTypes = ['html', 'wordpress'];
+
+    const qb = this.newsSourceRepository
       .createQueryBuilder()
       .update(NewsSource)
-      .set({ enabled: false })
-      .where('name NOT IN (:...seedNames)', { seedNames })
-      .orWhere('category = :category', { category: 'farandula' })
-      .orWhere('type IN (:...disabledTypes)', {
-        disabledTypes: ['html', 'wordpress'],
-      })
-      .orWhere('name IN (:...legacyNames)', {
-        legacyNames: [...LEGACY_FIXED_SOURCE_NAMES],
-      })
-      .execute();
+      .set({ enabled: false });
+
+    if (seedNames.length > 0) {
+      qb.where('name NOT IN (:...seedNames)', { seedNames });
+    } else {
+      qb.where('1=1');
+    }
+
+    qb.orWhere('category = :category', { category: 'farandula' });
+
+    if (disabledTypes.length > 0) {
+      qb.orWhere('type IN (:...disabledTypes)', { disabledTypes });
+    }
+
+    if (legacyNames.length > 0) {
+      qb.orWhere('name IN (:...legacyNames)', { legacyNames });
+    }
+
+    await qb.execute();
 
     this.logger.log(`News sources seeded: ${seeds.length}`);
   }
