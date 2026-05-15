@@ -143,7 +143,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tv_chilena',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Lima Limón',
@@ -151,7 +151,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tv_chilena',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Ojo a la Tele',
@@ -159,7 +159,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tv_chilena',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Cooperativa Televisión',
@@ -167,7 +167,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tv_chilena',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Variety TV',
@@ -175,7 +175,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tv_usa',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Rolling Stone TV & Movies',
@@ -183,7 +183,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tv_usa',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Variety Music',
@@ -191,7 +191,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Billboard Music',
@@ -199,7 +199,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Rolling Stone Music',
@@ -207,7 +207,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Portal Famosos Música',
@@ -215,7 +215,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Portal Popline',
@@ -223,7 +223,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Cooperativa Música',
@@ -231,7 +231,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Folha F5 Música',
@@ -239,7 +239,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'The Guardian Music',
@@ -247,7 +247,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'musica',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Cooperativa Streaming',
@@ -255,7 +255,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'streaming',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: '9to5Google',
@@ -263,7 +263,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tecnologia',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Xataka',
@@ -271,7 +271,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tecnologia',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: '9to5Mac',
@@ -279,7 +279,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tecnologia',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Pisapapeles',
@@ -287,7 +287,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tecnologia',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
   {
     name: 'Cooperativa Tecnología',
@@ -295,7 +295,7 @@ const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
     type: 'rss' as const,
     category: 'tecnologia',
     enabled: true,
-    selectors: {},
+    selectors: { maxAgeHours: '48' },
   },
 ];
 
