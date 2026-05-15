@@ -180,10 +180,16 @@ Ejemplo para crear un usuario con permiso de envío a n8n:
 El backend ya puede poblar noticias sin login del frontend:
 
 - ejecuta un scraping automatico al iniciar la aplicacion
-- vuelve a correr automaticamente cada minuto
-- evita corridas superpuestas si una ejecucion tarda mas de un minuto
+- vuelve a correr automaticamente cada 1 o 2 minutos segun `SCRAPE_INTERVAL_MINUTES`
+- evita corridas superpuestas si una ejecucion tarda mas que el intervalo configurado
 
 Esto ocurre dentro del `SchedulerModule`, asi que no depende del endpoint `POST /news/scrape` ni de un JWT.
+
+Variables utiles:
+
+- `STARTUP_SCRAPE_ENABLED=true` para habilitar o deshabilitar la corrida inicial.
+- `STARTUP_SCRAPE_DELAY_MS=15000` para demorar la primera corrida tras el arranque.
+- `SCRAPE_INTERVAL_MINUTES=1` para correr cada minuto, o `2` para correr cada dos minutos.
 
 ## Deploy en Railway
 
