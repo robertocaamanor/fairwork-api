@@ -51,6 +51,21 @@ export const DIRECT_RSS: DirectRssEntry[] = [
       },
     ],
   },
+  {
+    name: 'Publimetro',
+    feeds: [
+      {
+        url: 'https://www.publimetro.cl/arc/outboundfeeds/rss/?outputType=xml',
+        category: 'tv_chilena',
+        selectors: { includedUrlPatterns: '/entretenimiento/' }
+      },
+      {
+        url: 'https://www.publimetro.cl/arc/outboundfeeds/rss/?outputType=xml',
+        category: 'tecnologia',
+        selectors: { includedUrlPatterns: '/tecnologia/' }
+      },
+    ],
+  },
 
   // --- TV Italiana ---
   {
