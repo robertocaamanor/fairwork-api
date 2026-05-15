@@ -136,8 +136,83 @@ const GOOGLE_NEWS_SEARCHES: GoogleNewsSearchDefinition[] = [
 
 export const LEGACY_FIXED_SOURCE_NAMES = [] as const;
 
+const DIRECT_RSS_SOURCES: Array<Partial<NewsSource>> = [
+  {
+    name: 'Fotech Televisión',
+    url: 'https://www.fotech.cl/category/television/feed/',
+    type: 'rss' as const,
+    category: 'tv_chilena',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Lima Limón',
+    url: 'https://www.limalimon.cl/feed/',
+    type: 'rss' as const,
+    category: 'tv_chilena',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Variety TV',
+    url: 'https://variety.com/v/tv/feed/',
+    type: 'rss' as const,
+    category: 'tv_usa',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Rolling Stone TV & Movies',
+    url: 'https://www.rollingstone.com/tv-movies/feed/',
+    type: 'rss' as const,
+    category: 'tv_usa',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Variety Music',
+    url: 'https://variety.com/v/music/feed/',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Billboard Music',
+    url: 'https://www.billboard.com/c/music/feed/',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Rolling Stone Music',
+    url: 'https://www.rollingstone.com/music/feed/',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Portal Famosos Música',
+    url: 'https://portalfamosos.com.br/category/a-list/musica/feed/',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+  {
+    name: 'Portal Popline',
+    url: 'https://portalpopline.com.br/feed/',
+    type: 'rss' as const,
+    category: 'musica',
+    enabled: true,
+    selectors: {},
+  },
+];
+
 export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
-  return GOOGLE_NEWS_SEARCHES.flatMap((definition) =>
+  const googleSources = GOOGLE_NEWS_SEARCHES.flatMap((definition) =>
     GOOGLE_NEWS_SEARCH_LOCALES.map((locale) => ({
       name: `Google News ${definition.name} ${locale.suffix}`,
       url: buildGoogleNewsSearchUrl(definition[locale.queryKey], locale),
@@ -147,6 +222,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       selectors: googleNewsSelectors,
     })),
   );
+
+  return [...googleSources, ...DIRECT_RSS_SOURCES];
 }
 
 function buildGoogleNewsSearchUrl(
