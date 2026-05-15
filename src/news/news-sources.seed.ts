@@ -4,7 +4,14 @@ import { TV_CHANNELS_CHILE, TV_PERSONALITIES_CHILE } from './seeds/tv-chile.seed
 import { TV_PROGRAMS } from './seeds/tv-programs.seed';
 import { MUSIC_GENERAL, MUSIC_ARTISTS } from './seeds/music-artists.seed';
 import { MUSIC_FESTIVALS } from './seeds/music-festivals.seed';
-import { INTERNATIONAL_TV } from './seeds/international-tv.seed';
+import {
+  TV_ARGENTINA,
+  TV_MEXICANA,
+  TV_ESPANOLA,
+  TV_ITALIANA,
+  TV_USA,
+  CINE,
+} from './seeds/international-tv.seed';
 import {
   TECH_GENERAL,
   TECH_TOPICS,
@@ -50,7 +57,12 @@ const ALL_GOOGLE_SEARCHES: GoogleSearchEntry[] = [
   ...STREAMING_PLATFORMS,
   TECH_GENERAL,
   ...TECH_TOPICS,
-  ...INTERNATIONAL_TV,
+  ...TV_ARGENTINA,
+  ...TV_MEXICANA,
+  ...TV_ESPANOLA,
+  ...TV_ITALIANA,
+  ...TV_USA,
+  CINE,
 ];
 
 // ─── Exports ─────────────────────────────────────────────────────────────────
