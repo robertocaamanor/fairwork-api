@@ -77,6 +77,18 @@ export const DIRECT_RSS: DirectRssEntry[] = [
       { url: 'https://www.theguardian.com/music/rss', category: 'musica' },
     ],
   },
+  {
+    name: 'Stranotizie',
+    feeds: [
+      { url: 'https://www.stranotizie.it/category/musica/feed/', category: 'musica' },
+    ],
+  },
+  {
+    name: 'Radio Italia',
+    feeds: [
+      { url: 'https://www.radioitalia.it/rss.xml', category: 'musica' },
+    ],
+  },
 
   // --- Tecnología ---
   {
