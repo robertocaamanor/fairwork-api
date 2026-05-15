@@ -1,15 +1,36 @@
 import { NewsSource } from './entities/news-source.entity';
 
-const googleNewsSearchUrl = (query: string, gl: string, hl: string): string => {
-  const ceidLanguage = hl.split('-')[0];
+const GOOGLE_NEWS_HL = 'es-419';
+const GOOGLE_NEWS_GL = 'CL';
+const GOOGLE_NEWS_CEID = 'CL:es-419';
+
+const googleNewsSearchUrl = (query: string, windowDays = 1): string => {
   const params = new URLSearchParams({
-    q: `${query} when:1d`,
-    hl,
-    gl,
-    ceid: `${gl}:${ceidLanguage}`,
+    q: `${query} when:${windowDays}d`,
+    hl: GOOGLE_NEWS_HL,
+    gl: GOOGLE_NEWS_GL,
+    ceid: GOOGLE_NEWS_CEID,
   });
 
   return `https://news.google.com/rss/search?${params.toString()}`;
+};
+
+const googleNewsRssUrl = (rawUrl: string): string => {
+  const parsed = new URL(rawUrl);
+
+  if (parsed.pathname.startsWith('/rss/')) {
+    return parsed.toString();
+  }
+
+  if (
+    parsed.pathname.startsWith('/publications/') ||
+    parsed.pathname.startsWith('/topics/') ||
+    parsed.pathname.startsWith('/search')
+  ) {
+    parsed.pathname = `/rss${parsed.pathname}`;
+  }
+
+  return parsed.toString();
 };
 
 const googleNewsSelectors = {
@@ -17,267 +38,189 @@ const googleNewsSelectors = {
   sortOrder: 'desc',
 };
 
+export const LEGACY_FIXED_SOURCE_NAMES = [
+  'Pagina7 Entretencion',
+  'BioBio Espectaculos y TV',
+  'TiempoX',
+  'Fotech Feed',
+  'Ojo a la Tele',
+  'M360',
+  'Cooperativa Magazine',
+  'T13 EspectÃ¡culos',
+  'T13 Espectaculos',
+  '24 Horas EspectÃ¡culos',
+  '24 Horas Espectaculos',
+  'Mega Entretenimiento',
+  'CHV Show',
+  'La Hora EntretenciÃ³n',
+  'La Hora Entretencion',
+  'Lima LimÃ³n Feed',
+  'Lima Limon Feed',
+  'The Clinic Tiempo Libre Feed',
+  'Glamorama',
+  'TVBlog Italia',
+  'Novella 2000',
+  'Vertele ElDiario',
+  'Variety TV',
+  'Billboard Music',
+  'Official Charts News',
+  'La Cuarta Fiebre de Baile',
+  'TiempoX Fiebre de Baile',
+  'Google News Cooperativa',
+] as const;
+
 export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
   return [
     {
-      name: 'Pagina7 Entretencion',
-      url: 'https://www.pagina7.cl/entretencion/',
-      type: 'html',
-      category: 'tecnologia',
-      enabled: false,
-      selectors: {
-        linkPattern: '^https?://(www\\.)?pagina7\\.cl/entretencion/[^?#]+/?$',
-        excludePattern: '/page/|/entretencion/$',
-        maxItems: '40',
-      },
-    },
-    {
-      name: 'BioBio Espectaculos y TV',
-      url: 'https://www.biobiochile.cl/lista/categorias/espectaculos-y-tv',
-      type: 'html',
-      category: 'tv_chilena',
-      enabled: true,
-    },
-    {
-      name: 'TiempoX',
-      url: 'https://www.tiempox.com/',
-      type: 'html',
-      category: 'tecnologia',
-      enabled: false,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?tiempox\\.com/[a-z-]+/\\d{4}/\\d{2}/\\d{2}/[^?#]+/?$',
-        excludePattern: '/podcast/|/videos/|/tag/',
-        maxItems: '40',
-      },
-    },
-    {
-      name: 'Fotech Feed',
-      url: 'https://www.fotech.cl/feed/',
+      name: 'Google News BioBio Chile',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqKQgKIiNDQklTRkFnTWFoQUtEbUpwYjJKcGIyTm9hV3hsTG1Oc0tBQVAB?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
       type: 'rss',
       category: 'tv_chilena',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'Ojo a la Tele',
-      url: 'https://ojoalatele.com/feed/',
+      name: 'Google News Pagina 7',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqJAgKIh5DQklTRUFnTWFnd0tDbkJoWjJsdVlUY3VZMndvQUFQAQ?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
       type: 'rss',
       category: 'tv_chilena',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'M360',
-      url: 'https://www.m360.cl',
-      type: 'html',
-      category: 'tecnologia',
-      enabled: false,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?m360\\.cl/noticias/.+/\\d{4}-\\d{2}-\\d{2}/\\d+\\.html$',
-        excludePattern: 'twitter\\.com/intent|/noticias/stat/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'Cooperativa Magazine',
-      url: 'https://www.cooperativa.cl/noticias/magazine',
-      type: 'html',
-      category: 'radio',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?cooperativa\\.cl/noticias/magazine/.+/\\d{4}-\\d{2}-\\d{2}/\\d+\\.html$',
-        excludePattern:
-          'twitter\\.com/intent|tinyurl\\.com|/site/tax/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'T13 Espectáculos',
-      url: 'https://www.t13.cl/espectaculos',
-      type: 'html',
-      category: 'tv_chilena',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?t13\\.cl/noticia/(espectaculos|tendencias)/[^?#]+/?$',
-        excludePattern: '/videos/|/programas/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: '24 Horas Espectáculos',
-      url: 'https://www.24horas.cl/tendencias/espectaculos',
-      type: 'html',
-      category: 'tv_chilena',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?24horas\\.cl/(tendencias/espectaculos|show|espectaculos)/[^?#]+/?$',
-        excludePattern: '/videos/|/programas/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'Mega Entretenimiento',
-      url: 'https://www.mega.cl/entretenimiento/',
-      type: 'html',
-      category: 'tv_chilena',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?mega\\.cl/(entretenimiento|programas)/[^?#]+/?$',
-        excludePattern: '/capitulos/|/videos/|/en-vivo/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'CHV Show',
-      url: 'https://www.chilevision.cl/noticias/show/',
-      type: 'html',
-      category: 'tv_chilena',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?chilevision\\.cl/noticias/show/[^?#]+/?$',
-        excludePattern: '/videos/|/programas/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'La Hora Entretención',
-      url: 'https://lahora.cl/categoria/entretencion/',
-      type: 'html',
-      category: 'tecnologia',
-      enabled: false,
-      selectors: {
-        linkPattern: '^https?://(www\\.)?lahora\\.cl/entretencion/[^?#]+/?$',
-        excludePattern: '/page/|/categoria/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'Lima Limón Feed',
-      url: 'https://www.limalimon.cl/feed/',
+      name: 'Google News La Cuarta',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqJggKIiBDQklTRWdnTWFnNEtER3hoWTNWaGNuUmhMbU52YlNnQVAB?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
       type: 'rss',
       category: 'tv_chilena',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'The Clinic Tiempo Libre Feed',
-      url: 'https://www.theclinic.cl/noticias/tiempo-libre/feed/',
+      name: 'Google News La Nacion Chile',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqJQgKIh9DQklTRVFnTWFnMEtDMnhoYm1GamFXOXVMbU5zS0FBUAE?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
       type: 'rss',
       category: 'tv_chilena',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'Glamorama',
-      url: 'https://www.lacuarta.com/glamorama/',
-      type: 'html',
-      category: 'tecnologia',
-      enabled: false,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?lacuarta\\.com/(glamorama|espectaculos)/[^?#]+/?$',
-        excludePattern: '/temas/|/page/|javascript:',
-        maxItems: '50',
-      },
+      name: 'Google News El Desconcierto',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqLQgKIidDQklTRndnTWFoTUtFV1ZzWkdWelkyOXVZMmxsY25SdkxtTnNLQUFQAQ?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'TVBlog Italia',
-      url: 'https://www.tvblog.it/feed',
+      name: 'Google News Mega',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqIAgKIhpDQklTRFFnTWFna0tCMjFsWjJFdVkyd29BQVAB?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News Meganoticias',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqKggKIiRDQklTRlFnTWFoRUtEMjFsWjJGdWIzUnBZMmxoY3k1amJDZ0FQAQ?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News CHV Noticias',
+      url: googleNewsRssUrl(
+        'https://news.google.com/topics/CAAqKQgKIiNDQkFTRkFvS0wyMHZNRjlzYkc1eGJSSUdaWE10TkRFNUtBQVAB?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News T13',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqHggKIhhDQklTREFnTWFnZ0tCblF4TXk1amJDZ0FQAQ?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News Canal 13',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqHQgKIhdDQklTQ3dnTWFnY0tCVEV6TG1Oc0tBQVAB?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News TVN',
+      url: googleNewsSearchUrl('(TVN OR "Television Nacional de Chile")'),
+      type: 'rss',
+      category: 'tv_chilena',
+      enabled: true,
+      selectors: googleNewsSelectors,
+    },
+    {
+      name: 'Google News La Nacion Argentina',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqKggKIiRDQklTRlFnTWFoRUtEMnhoYm1GamFXOXVMbU52YlM1aGNpZ0FQAQ?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'Novella 2000',
-      url: 'https://www.novella2000.it/feed/',
+      name: 'Google News Clarin Argentina',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqJAgKIh5DQklTRUFnTWFnd0tDbU5zWVhKcGJpNWpiMjBvQUFQAQ?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
       type: 'rss',
       category: 'tv_internacional',
       enabled: true,
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'Vertele ElDiario',
-      url: 'https://www.eldiario.es/vertele/',
-      type: 'html',
-      category: 'tv_internacional',
-      enabled: true,
-      selectors: {
-        linkPattern: '^https?://(www\\.)?eldiario\\.es/vertele/[^?#]+/?$',
-        excludePattern: '/rss/|/videos/|/tags/|/page/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'Variety TV',
-      url: 'https://variety.com/v/tv/',
-      type: 'html',
-      category: 'tv_internacional',
-      enabled: true,
-      selectors: {
-        linkPattern: '^https?://(www\\.)?variety\\.com/\\d{4}/tv/[^?#]+/?$',
-        excludePattern: '/video/|/gallery/|/tags/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'Billboard Music',
-      url: 'https://www.billboard.com/c/music/',
-      type: 'html',
+      name: 'Google News Billboard Music',
+      url: googleNewsRssUrl(
+        'https://news.google.com/publications/CAAqKAgKIiJDQklTRXdnTWFnOEtEV0pwYkd4aWIyRnlaQzVqYjIwb0FBUAE?hl=es-419&gl=CL&ceid=CL%3Aes-419',
+      ),
+      type: 'rss',
       category: 'musica',
       enabled: true,
-      selectors: {
-        linkPattern: '^https?://(www\\.)?billboard\\.com/(music|pro)/[^?#]+/?$',
-        excludePattern: '/video/|/photos/|/charts/|javascript:',
-        maxItems: '50',
-      },
+      selectors: googleNewsSelectors,
     },
     {
-      name: 'Official Charts News',
-      url: 'https://www.officialcharts.com/news/',
-      type: 'html',
-      category: 'musica',
+      name: 'Google News IMDb',
+      url: googleNewsSearchUrl('imdb'),
+      type: 'rss',
+      category: 'tv_internacional',
       enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?officialcharts\\.com/(chart-news|news)/[^?#]+/?$',
-        excludePattern: '/archive/|/charts/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'La Cuarta Fiebre de Baile',
-      url: 'https://www.lacuarta.com/temas/fiebre-de-baile/',
-      type: 'html',
-      category: 'fiebre_de_baile',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?lacuarta\\.com/(espectaculos|glamorama)/[^?#]+/?$',
-        excludePattern: '/temas/|/page/|javascript:',
-        maxItems: '50',
-      },
-    },
-    {
-      name: 'TiempoX Fiebre de Baile',
-      url: 'https://www.tiempox.com/temas/fiebre-de-baile/',
-      type: 'html',
-      category: 'fiebre_de_baile',
-      enabled: true,
-      selectors: {
-        linkPattern:
-          '^https?://(www\\.)?tiempox\\.com/[a-z-]+/\\d{4}/\\d{2}/\\d{2}/[^?#]+/?$',
-        excludePattern: '/podcast/|/videos/|/tag/|/temas/',
-        maxItems: '50',
-      },
+      selectors: googleNewsSelectors,
     },
     {
       name: 'Google News Television Chile',
       url: googleNewsSearchUrl(
-        '(television OR TV OR teleseries OR reality) Chile',
-        'CL',
-        'es-419',
+        '(television OR TV OR teleseries OR reality OR farandula OR espectaculos) Chile',
       ),
       type: 'rss',
       category: 'tv_chilena',
@@ -287,9 +230,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
     {
       name: 'Google News Musica',
       url: googleNewsSearchUrl(
-        '(musica OR cantante OR album OR concierto)',
-        'CL',
-        'es-419',
+        '(musica OR cantante OR album OR concierto OR festival)',
       ),
       type: 'rss',
       category: 'musica',
@@ -299,9 +240,7 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
     {
       name: 'Google News Streaming',
       url: googleNewsSearchUrl(
-        '(streaming OR Netflix OR Prime Video OR Disney+ OR Max)',
-        'CL',
-        'es-419',
+        '(streaming OR Netflix OR Prime Video OR Disney+ OR Max OR serie OR pelicula)',
       ),
       type: 'rss',
       category: 'streaming',
@@ -312,8 +251,6 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'Google News Tecnologia Chile',
       url: googleNewsSearchUrl(
         '(android OR smartphones OR Google OR Samsung OR "inteligencia artificial" OR IA OR tecnologia) Chile',
-        'CL',
-        'es-419',
       ),
       type: 'rss',
       category: 'tecnologia',
@@ -324,8 +261,6 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       name: 'Google News Tecnologia Global',
       url: googleNewsSearchUrl(
         '(android OR smartphones OR Google OR Samsung OR "artificial intelligence" OR AI OR technology)',
-        'US',
-        'es-419',
       ),
       type: 'rss',
       category: 'tecnologia',
@@ -333,11 +268,9 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       selectors: googleNewsSelectors,
     },
     {
-      name: 'Google News TV Internacional España',
+      name: 'Google News TV Internacional',
       url: googleNewsSearchUrl(
-        '(television OR TV OR series) España',
-        'ES',
-        'es-419',
+        '(television OR TV OR series OR reality OR entertainment) (Argentina OR Mexico OR Spain OR Italy OR "United States")',
       ),
       type: 'rss',
       category: 'tv_internacional',
@@ -345,52 +278,15 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
       selectors: googleNewsSelectors,
     },
     {
-      name: 'Google News TV Internacional Italia',
-      url: googleNewsSearchUrl(
-        '(televisione OR TV OR serie) Italia',
-        'IT',
-        'it',
-      ),
+      name: 'Google News Fiebre de Baile',
+      url: googleNewsSearchUrl('"Fiebre de Baile"', 7),
       type: 'rss',
-      category: 'tv_internacional',
+      category: 'fiebre_de_baile',
       enabled: true,
-      selectors: googleNewsSelectors,
-    },
-    {
-      name: 'Google News TV Internacional Estados Unidos',
-      url: googleNewsSearchUrl(
-        '(television OR TV OR series) "United States"',
-        'US',
-        'en-US',
-      ),
-      type: 'rss',
-      category: 'tv_internacional',
-      enabled: true,
-      selectors: googleNewsSelectors,
-    },
-    {
-      name: 'Google News TV Internacional Argentina',
-      url: googleNewsSearchUrl(
-        '(television OR TV OR series) Argentina',
-        'AR',
-        'es-419',
-      ),
-      type: 'rss',
-      category: 'tv_internacional',
-      enabled: true,
-      selectors: googleNewsSelectors,
-    },
-    {
-      name: 'Google News TV Internacional México',
-      url: googleNewsSearchUrl(
-        '(television OR TV OR series) Mexico',
-        'MX',
-        'es-419',
-      ),
-      type: 'rss',
-      category: 'tv_internacional',
-      enabled: true,
-      selectors: googleNewsSelectors,
+      selectors: {
+        ...googleNewsSelectors,
+        maxAgeHours: '168',
+      },
     },
   ];
 }

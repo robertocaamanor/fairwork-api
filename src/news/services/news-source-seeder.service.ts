@@ -2,7 +2,10 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewsSource } from '../entities/news-source.entity';
-import { buildNewsSourceSeeds } from '../news-sources.seed';
+import {
+  LEGACY_FIXED_SOURCE_NAMES,
+  buildNewsSourceSeeds,
+} from '../news-sources.seed';
 
 @Injectable()
 export class NewsSourceSeederService implements OnApplicationBootstrap {
@@ -30,6 +33,9 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
 
   private async upsertSeeds(): Promise<void> {
     const seeds = buildNewsSourceSeeds();
+    const seedNames = seeds
+      .map((seed) => seed.name)
+      .filter((name): name is string => typeof name === 'string');
 
     for (const seed of seeds) {
       const existing = await this.newsSourceRepository.findOne({
@@ -52,7 +58,14 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
       .createQueryBuilder()
       .update(NewsSource)
       .set({ enabled: false })
-      .where('category = :category', { category: 'farandula' })
+      .where('name NOT IN (:...seedNames)', { seedNames })
+      .orWhere('category = :category', { category: 'farandula' })
+      .orWhere('type IN (:...disabledTypes)', {
+        disabledTypes: ['html', 'wordpress'],
+      })
+      .orWhere('name IN (:...legacyNames)', {
+        legacyNames: [...LEGACY_FIXED_SOURCE_NAMES],
+      })
       .execute();
 
     this.logger.log(`News sources seeded: ${seeds.length}`);

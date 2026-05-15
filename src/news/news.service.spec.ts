@@ -14,7 +14,7 @@ describe('NewsService Google inspector', () => {
       {} as any,
     );
 
-  it('excluye fuentes directas del seed del inspector de Google News', () => {
+  it('inspecciona URLs intermedias aunque vengan de fuentes legacy', () => {
     const service = createService() as any;
 
     const result = service.isGoogleAttributedItem({
@@ -24,7 +24,7 @@ describe('NewsService Google inspector', () => {
       title: 'Google News',
     });
 
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 
   it('mantiene la inspeccion para fuentes reales de Google News', () => {
