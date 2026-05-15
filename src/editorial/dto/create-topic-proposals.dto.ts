@@ -50,6 +50,11 @@ export class EditorialTopicProposalPayloadDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
+  titulo_seo?: string;
+
+  @IsOptional()
+  @IsString()
   bajada?: string;
 
   @IsOptional()
