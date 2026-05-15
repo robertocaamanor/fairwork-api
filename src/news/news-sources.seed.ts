@@ -5,7 +5,12 @@ import { TV_PROGRAMS } from './seeds/tv-programs.seed';
 import { MUSIC_GENERAL, MUSIC_ARTISTS } from './seeds/music-artists.seed';
 import { MUSIC_FESTIVALS } from './seeds/music-festivals.seed';
 import { INTERNATIONAL_TV } from './seeds/international-tv.seed';
-import { TECH_AND_STREAMING } from './seeds/tech-streaming.seed';
+import {
+  TECH_GENERAL,
+  TECH_TOPICS,
+  STREAMING_GENERAL,
+  STREAMING_PLATFORMS,
+} from './seeds/tech-streaming.seed';
 import { DIRECT_RSS } from './seeds/direct-rss.seed';
 
 // ─── Google News config ───────────────────────────────────────────────────────
@@ -41,7 +46,10 @@ const ALL_GOOGLE_SEARCHES: GoogleSearchEntry[] = [
   MUSIC_GENERAL,
   ...MUSIC_ARTISTS,
   ...MUSIC_FESTIVALS,
-  ...TECH_AND_STREAMING,
+  STREAMING_GENERAL,
+  ...STREAMING_PLATFORMS,
+  TECH_GENERAL,
+  ...TECH_TOPICS,
   ...INTERNATIONAL_TV,
 ];
 
