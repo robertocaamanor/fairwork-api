@@ -54,4 +54,4 @@ COPY --from=build /app/src/seed.ts ./src/seed.ts
 COPY --from=build /app/tsconfig.json ./tsconfig.json
 
 EXPOSE 3000
-CMD ["node", "dist/src/main.js"]
+CMD ["npm", "run", "start:prod"]

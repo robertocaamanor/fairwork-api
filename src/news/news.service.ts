@@ -228,42 +228,38 @@ export class NewsService {
     const activeSources = await this.newsSourceRepository.find({
       where: { enabled: true },
     });
-    const combinedItems: Array<{ source: NewsSource; item: ScrapedNewsInput }> =
-      [];
     let inserted = 0;
     let deduplicated = 0;
 
     for (const source of activeSources) {
-      const scrapedItems = await this.scrapeSource(source);
-      for (const item of scrapedItems) {
-        combinedItems.push({ source, item });
-      }
-    }
-
-    combinedItems.sort((left, right) => {
-      const leftTime =
-        left.item.publishedAt instanceof Date
-          ? left.item.publishedAt.getTime()
-          : 0;
-      const rightTime =
-        right.item.publishedAt instanceof Date
-          ? right.item.publishedAt.getTime()
-          : 0;
-
-      return rightTime - leftTime;
-    });
-
-    for (const { source, item } of combinedItems) {
       try {
-        const insertedNow = await this.saveScrapedItem(item);
-        if (insertedNow) {
-          inserted += 1;
-        } else {
-          deduplicated += 1;
+        const scrapedItems = await this.scrapeSource(source);
+        scrapedItems.sort((left, right) => {
+          const leftTime =
+            left.publishedAt instanceof Date ? left.publishedAt.getTime() : 0;
+          const rightTime =
+            right.publishedAt instanceof Date ? right.publishedAt.getTime() : 0;
+
+          return rightTime - leftTime;
+        });
+
+        for (const item of scrapedItems) {
+          try {
+            const insertedNow = await this.saveScrapedItem(item);
+            if (insertedNow) {
+              inserted += 1;
+            } else {
+              deduplicated += 1;
+            }
+          } catch (error) {
+            this.logger.warn(
+              `No se pudo procesar item de ${source.name}: ${String(error)}`,
+            );
+          }
         }
       } catch (error) {
         this.logger.warn(
-          `No se pudo procesar item de ${source.name}: ${String(error)}`,
+          `No se pudo scrapear la fuente ${source.name}: ${String(error)}`,
         );
       }
     }
