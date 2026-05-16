@@ -567,6 +567,31 @@ export class NewsService {
       return false;
     }
 
+    const rawNormalizedTitle = this.normalizeTitle(item.title || '');
+    const quickDuplicateQb = this.newsItemRepository
+      .createQueryBuilder('news')
+      .select(['news.id'])
+      .where('news.originalUrl = :originalUrl', {
+        originalUrl: normalizedUrl,
+      });
+
+    if (rawNormalizedTitle) {
+      quickDuplicateQb.orWhere(
+        'regexp_replace(lower(news.title), :regex, :replace, :flags) = :normalizedTitle',
+        {
+          regex: '[^a-z0-9]+',
+          replace: '',
+          flags: 'g',
+          normalizedTitle: rawNormalizedTitle,
+        },
+      );
+    }
+
+    const quickDuplicate = await quickDuplicateQb.getOne();
+    if (quickDuplicate) {
+      return false;
+    }
+
     const baseEntity = this.newsItemRepository.create({
       ...item,
       originalUrl: normalizedUrl,
