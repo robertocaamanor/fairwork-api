@@ -598,8 +598,12 @@ export class NewsService {
       status: 'new',
     });
 
-    const enriched =
-      await this.articleResolverService.resolveAndEnrich(baseEntity);
+    const enriched = await this.articleResolverService.resolveAndEnrich(
+      baseEntity,
+      {
+        allowGoogleNewsResolution: false,
+      },
+    );
     const persistable = this.buildPersistableNewsPatch(baseEntity, enriched);
 
     const normalizedTitle = this.normalizeTitle(

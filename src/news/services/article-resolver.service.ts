@@ -4,14 +4,28 @@ import * as cheerio from 'cheerio';
 import { NewsItem } from '../entities/news-item.entity';
 import { PuppeteerResolverService } from './puppeteer-resolver.service';
 
+type ResolveAndEnrichOptions = {
+  allowGoogleNewsResolution?: boolean;
+};
+
 @Injectable()
 export class ArticleResolverService {
   private readonly logger = new Logger(ArticleResolverService.name);
 
   constructor(private readonly puppeteerResolver: PuppeteerResolverService) {}
 
-  async resolveAndEnrich(item: NewsItem): Promise<NewsItem> {
+  async resolveAndEnrich(
+    item: NewsItem,
+    options: ResolveAndEnrichOptions = {},
+  ): Promise<NewsItem> {
     const enriched = { ...item } as NewsItem;
+
+    if (
+      options.allowGoogleNewsResolution === false &&
+      this.isGoogleNewsIntermediateUrl(item.originalUrl)
+    ) {
+      return enriched;
+    }
 
     try {
       this.logger.log(`Resolviendo URL final para: ${item.originalUrl}`);
