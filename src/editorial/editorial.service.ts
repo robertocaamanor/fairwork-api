@@ -1084,7 +1084,9 @@ export class EditorialService {
   private buildWordpressDraftInput(
     proposal: Record<string, unknown>,
   ): WordpressDraftInput {
-    const title = this.readProposalString(proposal.titulo);
+    const title = this.normalizeGeneratedTitle(
+      this.readProposalString(proposal.titulo),
+    );
     const content = this.readProposalString(proposal.contenido);
     const excerpt =
       this.readProposalString(proposal.bajada) ||
@@ -1107,6 +1109,81 @@ export class EditorialService {
       content,
       excerpt: excerpt || undefined,
     };
+  }
+
+  private normalizeGeneratedTitle(value: string): string {
+    const normalized = this.readProposalString(value);
+    if (!normalized) {
+      return '';
+    }
+
+    const words = normalized.split(/\s+/).filter(Boolean);
+    if (!this.looksLikeTitleCaseHeadline(words)) {
+      return normalized;
+    }
+
+    return words
+      .map((word, index) => this.toSentenceCaseHeadlineWord(word, index === 0))
+      .join(' ');
+  }
+
+  private looksLikeTitleCaseHeadline(words: string[]): boolean {
+    const lexicalWords = words.filter((word) => /[A-Za-zÁÉÍÓÚÑÜáéíóúñü]/.test(word));
+    if (lexicalWords.length < 4) {
+      return false;
+    }
+
+    const titleCaseWords = lexicalWords.filter((word) =>
+      /^[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+/.test(word),
+    );
+
+    return titleCaseWords.length >= lexicalWords.length - 1;
+  }
+
+  private toSentenceCaseHeadlineWord(word: string, isFirstWord: boolean): string {
+    const protectedWords = new Set([
+      'CHV',
+      'CNN',
+      'Disney+',
+      'Eurovision',
+      'HBO',
+      'Instagram',
+      'Mega',
+      'Netflix',
+      'Prime',
+      'Sanremo',
+      'Spotify',
+      'TikTok',
+      'TV+',
+      'TVN',
+      'Threads',
+      'Viña',
+      'WordPress',
+      'X',
+      'YouTube',
+    ]);
+    const prefix = word.match(/^["'“¿¡(]+/)?.[0] ?? '';
+    const suffix = word.match(/["'”?!.,:;)\]]+$/)?.[0] ?? '';
+    const core = word.slice(prefix.length, word.length - suffix.length);
+
+    if (!core) {
+      return word;
+    }
+
+    if (
+      protectedWords.has(core) ||
+      /\d/.test(core) ||
+      /^[A-ZÁÉÍÓÚÑÜ]{2,}$/.test(core)
+    ) {
+      return word;
+    }
+
+    const lowerCore = core.toLowerCase();
+    const nextCore = isFirstWord
+      ? `${lowerCore.charAt(0).toUpperCase()}${lowerCore.slice(1)}`
+      : lowerCore;
+
+    return `${prefix}${nextCore}${suffix}`;
   }
 
   private async createWordpressDraft(

@@ -98,3 +98,30 @@ export class UpdateNewsStatusDto {
   @IsEnum(NEWS_STATUS)
   status: NewsStatus;
 }
+
+export class SendToN8nDto {
+  @ApiProperty({
+    example: 4,
+    minimum: 1,
+    maximum: 7,
+    description:
+      'Radar editorial donde 1 es muy negativa y 7 es muy positiva.',
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(7)
+  editorialRating: number;
+
+  @ApiPropertyOptional({
+    example:
+      'El foco critico debe ir en los insultos o ataques dirigidos al artista.',
+    maxLength: 600,
+    description:
+      'Contexto editorial opcional para orientar el enfoque del articulo.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  editorialContext?: string;
+}

@@ -14,7 +14,11 @@ import {
   NewsCategory,
   NewsSource,
 } from './entities/news-source.entity';
-import { NewsFilterDto, RelatedNewsFilterDto } from './dto/news-item.dto';
+import {
+  NewsFilterDto,
+  RelatedNewsFilterDto,
+  SendToN8nDto,
+} from './dto/news-item.dto';
 import { RssScraper } from './scrapers/rss.scraper';
 import { HtmlScraper } from './scrapers/html.scraper';
 import { GenericWordpressScraper } from './scrapers/generic-wordpress.scraper';
@@ -418,7 +422,7 @@ export class NewsService {
     return this.newsItemRepository.save(item);
   }
 
-  async sendToN8n(id: string): Promise<{
+  async sendToN8n(id: string, input: SendToN8nDto): Promise<{
     success: true;
     message: string;
     newsId: string;
@@ -467,6 +471,11 @@ export class NewsService {
     }
 
     try {
+      const editorialContext = input.editorialContext?.trim();
+      const editorialDirection = this.resolveEditorialDirection(
+        input.editorialRating,
+      );
+
       await axios.post(
         webhookUrl,
         {
@@ -482,6 +491,13 @@ export class NewsService {
           publishedAt: item.publishedAt,
           score: item.score,
           status: item.status,
+          editorialRating: input.editorialRating,
+          editorialDirection,
+          shouldCriticize: editorialDirection === 'negative',
+          editorialContext: editorialContext || undefined,
+          titleStyle: 'sentence_case',
+          titleStyleHint:
+            'Escribe el titular en formato normal: mayuscula inicial y nombres propios, evitando Title Case.',
         },
         {
           timeout: 15000,
@@ -843,6 +859,20 @@ export class NewsService {
 
     const fallback = this.buildFallbackContent(item);
     return fallback;
+  }
+
+  private resolveEditorialDirection(
+    editorialRating: number,
+  ): 'negative' | 'neutral' | 'positive' {
+    if (editorialRating <= 3) {
+      return 'negative';
+    }
+
+    if (editorialRating >= 5) {
+      return 'positive';
+    }
+
+    return 'neutral';
   }
 
   private stripHtmlToText(input: string): string {

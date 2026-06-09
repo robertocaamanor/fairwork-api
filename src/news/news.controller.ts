@@ -20,6 +20,7 @@ import { NewsService } from './news.service';
 import {
   NewsFilterDto,
   RelatedNewsFilterDto,
+  SendToN8nDto,
   UpdateNewsStatusDto,
 } from './dto/news-item.dto';
 
@@ -80,8 +81,8 @@ export class NewsController {
   @RequireSendToN8n()
   @ApiOperation({ summary: 'Enviar una noticia a n8n' })
   @ApiParam({ name: 'id', description: 'UUID de la noticia' })
-  sendToN8n(@Param('id', ParseUUIDPipe) id: string) {
-    return this.newsService.sendToN8n(id);
+  sendToN8n(@Param('id', ParseUUIDPipe) id: string, @Body() body: SendToN8nDto) {
+    return this.newsService.sendToN8n(id, body);
   }
 
   @Patch(':id/status')
