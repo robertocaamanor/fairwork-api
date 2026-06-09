@@ -8,7 +8,10 @@ describe('news source seeds', () => {
       expect.arrayContaining([
         'facebook.com',
         'instagram.com',
+        'threads.com',
+        'tiktok.com',
         'tvenserio.com',
+        'x.com',
         'fotech.cl',
         'limalimon.cl',
         'biobiochile.cl',

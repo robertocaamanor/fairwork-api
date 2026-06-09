@@ -27,7 +27,10 @@ const GOOGLE_NEWS_MAX_AGE_HOURS = '48';
 const GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS = [
   'facebook.com',
   'instagram.com',
+  'threads.com',
+  'tiktok.com',
   'tvenserio.com',
+  'x.com',
 ];
 
 const GOOGLE_NEWS_EXCLUDED_DOMAINS = buildGoogleNewsExcludedDomains();
