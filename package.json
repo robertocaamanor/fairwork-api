@@ -18,11 +18,11 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node src/seed.ts",
-    "clear:news": "ts-node clear-news.ts",
-    "reset:google-news": "ts-node scripts/reset-google-news-sources.ts",
-    "migrate:news-sources-url": "ts-node scripts/run-expand-news-sources-url.ts",
-    "migrate:news-items-source-url": "ts-node scripts/run-expand-news-items-source-url.ts"
+    "seed": "node dist/src/seed.js",
+    "clear:news": "node dist/clear-news.js",
+    "reset:google-news": "node dist/scripts/reset-google-news-sources.js",
+    "migrate:news-sources-url": "node dist/scripts/run-expand-news-sources-url.js",
+    "migrate:news-items-source-url": "node dist/scripts/run-expand-news-items-source-url.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
