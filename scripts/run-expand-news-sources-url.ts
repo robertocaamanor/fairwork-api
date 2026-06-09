@@ -1,7 +1,10 @@
 import 'dotenv/config';
 import { Client } from 'pg';
-import * as fs from 'fs';
-import * as path from 'path';
+
+const MIGRATION_SQL = `
+ALTER TABLE news_sources
+ALTER COLUMN url TYPE text;
+`;
 
 function buildClient(): Client {
   if (process.env.DATABASE_URL) {
@@ -34,11 +37,8 @@ async function runMigration() {
     console.log('Conectando a PostgreSQL...');
     await client.connect();
 
-    const sqlFilePath = path.join(__dirname, 'expand_news_sources_url.sql');
-    const sql = fs.readFileSync(sqlFilePath, 'utf-8');
-
-    console.log(`Ejecutando migracion: ${path.basename(sqlFilePath)}`);
-    await client.query(sql);
+    console.log('Ejecutando migracion: expand_news_sources_url');
+    await client.query(MIGRATION_SQL);
 
     const verify = await client.query(
       `SELECT column_name, data_type, is_nullable, character_maximum_length
