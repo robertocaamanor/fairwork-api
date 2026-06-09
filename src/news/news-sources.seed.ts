@@ -47,6 +47,29 @@ const GOOGLE_NEWS_LOCALES: GoogleNewsLocale[] = [
   { suffix: 'EN', queryKey: 'queryEn', hl: 'en-US',  gl: 'US', ceid: 'US:en' },
 ];
 
+function getEnabledGoogleNewsLocales(): GoogleNewsLocale[] {
+  const rawValue = (process.env.GOOGLE_NEWS_LOCALES ?? 'ES').trim();
+
+  if (!rawValue) {
+    return GOOGLE_NEWS_LOCALES.filter((locale) => locale.suffix === 'ES');
+  }
+
+  const allowedSuffixes = new Set(
+    rawValue
+      .split(',')
+      .map((value) => value.trim().toUpperCase())
+      .filter(Boolean),
+  );
+
+  const locales = GOOGLE_NEWS_LOCALES.filter((locale) =>
+    allowedSuffixes.has(locale.suffix),
+  );
+
+  return locales.length > 0
+    ? locales
+    : GOOGLE_NEWS_LOCALES.filter((locale) => locale.suffix === 'ES');
+}
+
 // ─── Agrupación de todas las búsquedas Google News ───────────────────────────
 
 const ALL_GOOGLE_SEARCHES: GoogleSearchEntry[] = [
@@ -73,8 +96,9 @@ const ALL_GOOGLE_SEARCHES: GoogleSearchEntry[] = [
 export const LEGACY_FIXED_SOURCE_NAMES = [] as const;
 
 export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
+  const enabledLocales = getEnabledGoogleNewsLocales();
   const googleSources = ALL_GOOGLE_SEARCHES.flatMap((entry) =>
-    GOOGLE_NEWS_LOCALES.map((locale) => ({
+    enabledLocales.map((locale) => ({
       name: `Google News ${entry.name} ${locale.suffix}`,
       url: buildGoogleNewsSearchUrl(entry[locale.queryKey], locale),
       type: 'rss' as const,
@@ -148,5 +172,6 @@ function normalizeExcludedDomain(url: string): string | null {
 
 export const TEST_ONLY = {
   buildGoogleNewsExcludedDomains,
+  getEnabledGoogleNewsLocales,
   normalizeExcludedDomain,
 };

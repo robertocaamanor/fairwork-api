@@ -2,7 +2,10 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { NewsSource } from './news/entities/news-source.entity';
-import { buildNewsSourceSeeds } from './news/news-sources.seed';
+import {
+  buildNewsSourceSeeds,
+  LEGACY_FIXED_SOURCE_NAMES,
+} from './news/news-sources.seed';
 
 function isSslEnabled(): boolean {
   return process.env.DATABASE_SSL === 'true';
@@ -52,8 +55,12 @@ const dataSource = buildDataSource();
 async function runSeed() {
   await dataSource.initialize();
   const repo = dataSource.getRepository(NewsSource);
+  const seeds = buildNewsSourceSeeds();
+  const seedUrls = seeds
+    .map((seed) => seed.url)
+    .filter((url): url is string => typeof url === 'string');
 
-  for (const seed of buildNewsSourceSeeds()) {
+  for (const seed of seeds) {
     const existing = await repo.findOne({ where: { url: seed.url } });
     if (!existing) {
       await repo.save(repo.create(seed));
@@ -61,6 +68,31 @@ async function runSeed() {
       await repo.save(repo.merge(existing, seed));
     }
   }
+
+  const qb = repo
+    .createQueryBuilder()
+    .update(NewsSource)
+    .set({ enabled: false });
+
+  if (seedUrls.length > 0) {
+    qb.where('url NOT IN (:...seedUrls)', { seedUrls });
+  } else {
+    qb.where('1=1');
+  }
+
+  qb.orWhere('category = :category', { category: 'farandula' });
+
+  qb.orWhere('type IN (:...disabledTypes)', {
+    disabledTypes: ['html', 'wordpress'],
+  });
+
+  if (LEGACY_FIXED_SOURCE_NAMES.length > 0) {
+    qb.orWhere('name IN (:...legacyNames)', {
+      legacyNames: [...LEGACY_FIXED_SOURCE_NAMES],
+    });
+  }
+
+  await qb.execute();
 
   await dataSource.destroy();
   // eslint-disable-next-line no-console
