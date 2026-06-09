@@ -29,11 +29,35 @@ export class TopicSourceDto {
   @MaxLength(1000)
   url?: string;
 
+  @ApiPropertyOptional({ example: 'https://example.com/noticia-original' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  originalUrl?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/noticia-resuelta' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  resolvedUrl?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  sourceUrl?: string;
+
   @ApiPropertyOptional({ example: 'La Tercera' })
   @IsOptional()
   @IsString()
   @MaxLength(120)
   sourceName?: string;
+
+  @ApiPropertyOptional({ example: 'La Tercera' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  mediaName?: string;
 
   @ApiPropertyOptional({ example: 'Resumen breve de la noticia' })
   @IsOptional()

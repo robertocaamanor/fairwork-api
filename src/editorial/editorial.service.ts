@@ -72,9 +72,25 @@ interface N8nTopicSourcePayload {
   summary: string;
   content: string;
   sourceName: string;
+  sourceUrl?: string;
   originalUrl: string;
+  resolvedUrl?: string;
   publishedAt: Date | string;
   category: NewsCategory;
+}
+
+interface EditorialSourceCitation extends Record<string, unknown> {
+  id?: string;
+  title?: string;
+  summary?: string;
+  sourceName?: string;
+  mediaName?: string;
+  url?: string;
+  originalUrl?: string;
+  resolvedUrl?: string;
+  sourceUrl?: string;
+  publishedAt?: string | Date;
+  category?: string;
 }
 
 interface N8nTopicPayload {
@@ -452,7 +468,11 @@ export class EditorialService {
 
     const theme = dto.theme.trim();
     const tone = dto.tone?.trim() || 'informativo';
-    const sources = (dto.sources ?? []).map((source) => ({ ...source }));
+    const sources = await this.resolveTopicProposalSources(
+      topicId,
+      dto.sources,
+      dto.sourceNewsIds,
+    );
     const requestedProposals =
       dto.requestedProposals ?? Math.min(dto.proposals.length, 5);
 
@@ -492,10 +512,124 @@ export class EditorialService {
   }
 
   async listTopicProposals(topicId: string): Promise<EditorialTopicProposal[]> {
-    return this.topicProposalRepository.find({
+    const proposals = await this.topicProposalRepository.find({
       where: { topicId: topicId.trim() },
       order: { proposalIndex: 'ASC' },
     });
+
+    if (proposals.every((proposal) => proposal.sources.length > 0)) {
+      return proposals;
+    }
+
+    const fallbackSources = await this.resolveTopicProposalSources(topicId);
+
+    return proposals.map((proposal) => ({
+      ...proposal,
+      sources:
+        proposal.sources.length > 0 ? proposal.sources : fallbackSources,
+    }));
+  }
+
+  private async resolveTopicProposalSources(
+    topicId: string,
+    incomingSources?: object[],
+    incomingSourceNewsIds?: string[],
+  ): Promise<EditorialSourceCitation[]> {
+    const normalizedIncoming = this.normalizeSourceCitations(incomingSources);
+    if (normalizedIncoming.length > 0) {
+      return normalizedIncoming;
+    }
+
+    const topic = await this.topicClusterRepository.findOne({
+      where: { id: topicId.trim() },
+    });
+
+    const topicSources = this.normalizeSourceCitations(topic?.sources);
+    if (topicSources.length > 0) {
+      return topicSources;
+    }
+
+    const sourceNewsIds = incomingSourceNewsIds?.length
+      ? incomingSourceNewsIds
+      : topic?.sourceNewsIds ?? [];
+
+    if (sourceNewsIds.length === 0) {
+      return [];
+    }
+
+    const newsItems = await this.newsItemRepository.find({
+      where: { id: In(sourceNewsIds) },
+    });
+
+    const itemsById = new Map(newsItems.map((item) => [item.id, item]));
+
+    return sourceNewsIds
+      .map((sourceNewsId) => itemsById.get(sourceNewsId))
+      .filter((item): item is NewsItem => Boolean(item))
+      .map((item) => this.buildSourceCitationFromNewsItem(item));
+  }
+
+  private normalizeSourceCitations(
+    value?: object[],
+  ): EditorialSourceCitation[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((source) => this.normalizeSourceCitation(source as Record<string, unknown>))
+      .filter(
+        (source) =>
+          Boolean(source.title) || Boolean(source.sourceName) || Boolean(source.url),
+      );
+  }
+
+  private normalizeSourceCitation(
+    source: Record<string, unknown>,
+  ): EditorialSourceCitation {
+    const sourceName =
+      this.readRecordString(source.sourceName) ||
+      this.readRecordString(source.mediaName) ||
+      this.readRecordString(source.media) ||
+      this.readRecordString(source.name);
+    const originalUrl =
+      this.readRecordString(source.originalUrl) ||
+      this.readRecordString(source.url) ||
+      this.readRecordString(source.link);
+    const resolvedUrl = this.readRecordString(source.resolvedUrl);
+    const url = resolvedUrl || originalUrl;
+
+    return {
+      id: this.readRecordString(source.id) || undefined,
+      title: this.readRecordString(source.title) || undefined,
+      summary: this.readRecordString(source.summary) || undefined,
+      sourceName: sourceName || undefined,
+      mediaName: sourceName || undefined,
+      url: url || undefined,
+      originalUrl: originalUrl || undefined,
+      resolvedUrl: resolvedUrl || undefined,
+      sourceUrl: this.readRecordString(source.sourceUrl) || undefined,
+      publishedAt: this.readRecordString(source.publishedAt) || undefined,
+      category: this.readRecordString(source.category) || undefined,
+    };
+  }
+
+  private buildSourceCitationFromNewsItem(
+    item: NewsItem,
+  ): EditorialSourceCitation {
+    return {
+      id: item.id,
+      title: item.title,
+      summary: item.summary,
+      sourceName: item.sourceName,
+      mediaName: item.sourceName,
+      url: item.resolvedUrl || item.originalUrl,
+      originalUrl: item.originalUrl,
+      resolvedUrl: item.resolvedUrl,
+      sourceUrl: item.sourceUrl,
+      publishedAt: item.publishedAt,
+      category: item.category,
+    };
   }
 
   private async getProposalCountsByTopicId(
@@ -1050,7 +1184,9 @@ export class EditorialService {
           source.summary ||
           '',
         sourceName: source.sourceName,
+        sourceUrl: source.sourceUrl,
         originalUrl: source.resolvedUrl || source.originalUrl,
+        resolvedUrl: source.resolvedUrl,
         publishedAt: source.publishedAt,
         category: source.category,
       };
@@ -1062,7 +1198,12 @@ export class EditorialService {
       summary: this.readRecordString(source.summary),
       content: this.readRecordString(source.content),
       sourceName: this.readRecordString(source.sourceName),
-      originalUrl: this.readRecordString(source.originalUrl),
+      sourceUrl: this.readRecordString(source.sourceUrl),
+      originalUrl:
+        this.readRecordString(source.resolvedUrl) ||
+        this.readRecordString(source.originalUrl) ||
+        this.readRecordString(source.url),
+      resolvedUrl: this.readRecordString(source.resolvedUrl),
       publishedAt: this.readRecordString(source.publishedAt),
       category: this.isNewsCategory(source.category)
         ? source.category
