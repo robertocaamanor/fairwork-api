@@ -25,7 +25,7 @@ export class NewsItem {
   @Column({ length: 120 })
   sourceName: string;
 
-  @Column({ length: 500 })
+  @Column({ type: 'text' })
   sourceUrl: string;
 
   @Column({ type: 'enum', enum: NEWS_STORAGE_CATEGORIES })
