@@ -15,6 +15,18 @@ export const MUSIC_FESTIVALS: GoogleSearchEntry[] = [
     queryEn: 'Sanremo festival music',
   },
   {
+    name: 'Sanremo 2027',
+    category: 'sanremo',
+    queryEs: 'Sanremo 2027 Festival',
+    queryEn: 'Sanremo 2027 Festival',
+  },
+  {
+    name: 'Sanremo 2027 Stefano Di Martino',
+    category: 'sanremo',
+    queryEs: 'Sanremo 2027 ("Stefano Di Martino" OR "Stefano De Martino")',
+    queryEn: 'Sanremo 2027 ("Stefano Di Martino" OR "Stefano De Martino")',
+  },
+  {
     name: 'Coachella',
     category: 'coachella',
     queryEs: 'Coachella festival musica',

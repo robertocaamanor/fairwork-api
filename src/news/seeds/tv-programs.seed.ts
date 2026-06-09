@@ -15,12 +15,6 @@ const PROGRAM_DEFINITIONS: ProgramDef[] = [
     queryEn: 'Fiebre de Baile CHV dance show',
   },
   {
-    name: 'El Internado Mega',
-    categories: ['tv_chilena', 'el_internado_mega'],
-    queryEs: 'El Internado Mega',
-    queryEn: 'El Internado Mega reality show',
-  },
-  {
     name: 'Vecinos al Límite Canal 13',
     categories: ['tv_chilena', 'vecinos_al_limite'],
     queryEs: 'Vecinos al Límite Canal 13',

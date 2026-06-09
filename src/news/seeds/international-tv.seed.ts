@@ -58,33 +58,80 @@ export const TV_ESPANOLA: GoogleSearchEntry[] = TV_ESPANOLA_NAMES.map(
 
 // ─── TV Italiana ──────────────────────────────────────────────────────────────
 
-const TV_ITALIANA_NAMES: string[] = [
-  'Rai',
-  'Rai 1',
-  'Rai 2',
-  'Rai 3',
-  'Mediaset',
-  'Canale 5',
-  'La 7',
-  'Italia 1',
-  'Rete 4',
-  'Nove',
-  'Che Tempo Che Fa',
-  'Domenica In',
-  'Belve',
-  'Festival di Sanremo',
-  'Amadeus',
-  'Carlo Conti',
-  'Bruno Vespa',
-  'Porta a Porta',
-  'Antonella Clerici',
-  'Sabrina Salerno',
-  'Valeria Marini',
+export const TV_ITALIANA: GoogleSearchEntry[] = [
+  {
+    name: 'Rai television italiana',
+    category: 'tv_italiana',
+    queryEs: 'Rai televisione italiana programmi conduttori',
+    queryEn: 'Rai Italian television shows presenters',
+  },
+  {
+    name: 'Mediaset television italiana',
+    category: 'tv_italiana',
+    queryEs: 'Mediaset televisione italiana programmi conduttori',
+    queryEn: 'Mediaset Italian television shows presenters',
+  },
+  {
+    name: 'Canale 5 programmi',
+    category: 'tv_italiana',
+    queryEs: 'Canale 5 programmi tv conduttori televisione italiana',
+    queryEn: 'Canale 5 Italian TV shows presenters',
+  },
+  {
+    name: 'La7 programmi',
+    category: 'tv_italiana',
+    queryEs: 'La7 programmi tv conduttori televisione italiana',
+    queryEn: 'La7 Italian TV shows presenters',
+  },
+  {
+    name: 'Che Tempo Che Fa',
+    category: 'tv_italiana',
+    queryEs: 'Che Tempo Che Fa Fabio Fazio televisione italiana',
+    queryEn: 'Che Tempo Che Fa Fabio Fazio Italian television',
+  },
+  {
+    name: 'Domenica In',
+    category: 'tv_italiana',
+    queryEs: 'Domenica In Mara Venier Rai televisione italiana',
+    queryEn: 'Domenica In Mara Venier Rai Italian television',
+  },
+  {
+    name: 'Belve',
+    category: 'tv_italiana',
+    queryEs: 'Belve Francesca Fagnani Rai televisione italiana',
+    queryEn: 'Belve Francesca Fagnani Rai Italian television',
+  },
+  {
+    name: 'Porta a Porta',
+    category: 'tv_italiana',
+    queryEs: 'Porta a Porta Bruno Vespa Rai televisione italiana',
+    queryEn: 'Porta a Porta Bruno Vespa Rai Italian television',
+  },
+  {
+    name: 'Carlo Conti',
+    category: 'tv_italiana',
+    queryEs: 'Carlo Conti Rai conduttore televisione italiana',
+    queryEn: 'Carlo Conti Rai Italian TV presenter',
+  },
+  {
+    name: 'Antonella Clerici',
+    category: 'tv_italiana',
+    queryEs: 'Antonella Clerici Rai conduttrice televisione italiana',
+    queryEn: 'Antonella Clerici Rai Italian TV presenter',
+  },
+  {
+    name: 'Amadeus TV italiana',
+    category: 'tv_italiana',
+    queryEs: 'Amadeus conduttore televisione italiana Rai',
+    queryEn: 'Amadeus Italian TV presenter Rai',
+  },
+  {
+    name: 'Stefano De Martino TV italiana',
+    category: 'tv_italiana',
+    queryEs: 'Stefano De Martino conduttore televisione italiana Rai',
+    queryEn: 'Stefano De Martino Italian TV presenter Rai',
+  },
 ];
-
-export const TV_ITALIANA: GoogleSearchEntry[] = TV_ITALIANA_NAMES.map(
-  (name) => ({ name, category: 'tv_italiana', queryEs: name, queryEn: name }),
-);
 
 // ─── TV USA ───────────────────────────────────────────────────────────────────
 

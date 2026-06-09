@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { NewsItem, NewsStatus } from './entities/news-item.entity';
 import {
   NEWS_CATEGORIES,
@@ -106,6 +106,10 @@ export class NewsService {
       qb.andWhere('news.category = :category', { category: filter.category });
     }
 
+    if (filter.category === 'tv_italiana') {
+      this.applyItalianTvRelevanceFilter(qb);
+    }
+
     if (filter.source) {
       qb.andWhere('news.sourceName ILIKE :source', {
         source: `%${filter.source.trim()}%`,
@@ -129,6 +133,77 @@ export class NewsService {
     }
 
     return qb.getMany();
+  }
+
+  private applyItalianTvRelevanceFilter(
+    qb: SelectQueryBuilder<NewsItem>,
+  ): void {
+    const searchableText =
+      "concat_ws(' ', news.title, news.summary, news.content, news.sourceName)";
+    const positiveTerms = [
+      'rai',
+      'mediaset',
+      'canale 5',
+      'la7',
+      'italia 1',
+      'rete 4',
+      'televisione italiana',
+      'tv italiana',
+      'programmi tv',
+      'conduttore',
+      'conduttrice',
+      'palinsesto',
+      'ascolti tv',
+      'domenica in',
+      'belve',
+      'porta a porta',
+      'che tempo che fa',
+      'fabio fazio',
+      'mara venier',
+      'francesca fagnani',
+      'carlo conti',
+      'amadeus',
+      'stefano de martino',
+      'antonella clerici',
+      'bruno vespa',
+    ];
+    const negativeTerms = [
+      'mundial',
+      'partido',
+      'futbol',
+      'fútbol',
+      'football',
+      'soccer',
+      'calcio',
+      'serie a',
+      'champions league',
+      'copa',
+      'rugby',
+      'tennis',
+    ];
+
+    qb.andWhere(
+      `(${positiveTerms
+        .map((_, index) => `${searchableText} ILIKE :italianTvTerm${index}`)
+        .join(' OR ')})`,
+      Object.fromEntries(
+        positiveTerms.map((term, index) => [
+          `italianTvTerm${index}`,
+          `%${term}%`,
+        ]),
+      ),
+    );
+    qb.andWhere(
+      `NOT (${negativeTerms
+        .map((_, index) => `${searchableText} ILIKE :italianTvBlocked${index}`)
+        .join(' OR ')})`,
+      Object.fromEntries(
+        negativeTerms.map((term, index) => [
+          `italianTvBlocked${index}`,
+          `%${term}%`,
+        ]),
+      ),
+    );
   }
 
   async findRelatedNews(filter: RelatedNewsFilterDto): Promise<NewsItem[]> {
