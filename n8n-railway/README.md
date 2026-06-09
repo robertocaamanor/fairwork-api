@@ -5,6 +5,7 @@ Servicio aislado para desplegar n8n en Railway usando PostgreSQL persistente.
 ## Archivos
 
 - `Dockerfile`: usa la imagen oficial de n8n.
+- `docker-entrypoint-railway.sh`: alinea `N8N_PORT` con `PORT` para Railway.
 - `.env.example`: variables minimas para Railway.
 - `railway.json`: build por Dockerfile y healthcheck en `/healthz`.
 
@@ -15,7 +16,6 @@ Define estas variables en el servicio de n8n:
 ```env
 N8N_HOST=<tu-subdominio>.up.railway.app
 N8N_PROTOCOL=https
-N8N_PORT=5678
 N8N_EDITOR_BASE_URL=https://<tu-subdominio>.up.railway.app
 WEBHOOK_URL=https://<tu-subdominio>.up.railway.app
 N8N_PROXY_HOPS=1
@@ -43,6 +43,12 @@ N8N_BASIC_AUTH_PASSWORD=<password-largo>
 3. Copia las variables del bloque anterior.
 4. Haz el primer deploy.
 5. Cuando Railway te entregue el dominio publico, actualiza `N8N_HOST`, `N8N_EDITOR_BASE_URL` y `WEBHOOK_URL` con ese dominio exacto.
+
+## Nota sobre Railway
+
+Railway inyecta un `PORT` dinamico. Este proyecto ya incluye un entrypoint que copia ese valor a `N8N_PORT` antes de arrancar n8n.
+
+Si ves `Starting Healthcheck` seguido de varios `service unavailable`, el sintoma mas comun en este servicio es que n8n no este escuchando en el puerto dinamico de Railway.
 
 ## Integracion con tu backend
 

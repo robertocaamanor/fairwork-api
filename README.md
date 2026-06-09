@@ -195,7 +195,9 @@ Variables utiles:
 
 1. Crea un nuevo proyecto en Railway y conecta este repositorio.
 2. Agrega un servicio PostgreSQL dentro del mismo proyecto.
-3. En el servicio de la API define estas variables:
+3. Crea un servicio para la API apuntando a la carpeta `news-scraper-api`.
+4. Si vas a desplegar todo el stack en la misma plataforma, crea tambien un servicio `web` apuntando a `news-monitor-web` y un servicio `n8n` apuntando a `news-scraper-api/n8n-railway`.
+5. En el servicio de la API define estas variables:
 
 - `DATABASE_URL=${{Postgres.DATABASE_URL}}`
 - `DATABASE_SSL=true`
@@ -203,10 +205,12 @@ Variables utiles:
 - `FRONTEND_URL=https://tu-frontend.railway.app`
 - `N8N_URL` y `N8N_WEBHOOK_URL` segun tu flujo.
 
-4. Railway detectara el `Dockerfile` y construira la imagen automaticamente.
-5. Una vez desplegado, abre la URL publica y verifica que responda `Hello World!` en `/`.
+6. Railway detectara el `Dockerfile` y construira la imagen automaticamente.
+7. Una vez desplegado, abre la URL publica y verifica que responda `Hello World!` en `/` y `{ status: 'ok' }` en `/health`.
 
 Si necesitas poblar fuentes iniciales tras el primer deploy, ejecuta un shell en Railway y corre `npm run seed`.
+
+Para una guia completa del stack con frontend y n8n en el mismo proyecto, revisa `../RAILWAY_FULL_STACK_DEPLOY.md`.
 
 ## Seed inicial
 
