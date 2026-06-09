@@ -25,10 +25,19 @@ export class GenerateTopicProposalsDto {
   @IsUUID('4', { each: true })
   newsIds?: string[];
 
-  @ApiPropertyOptional({ enum: EDITORIAL_TONES, example: 'automatic' })
+  @ApiPropertyOptional({ enum: EDITORIAL_TONES, example: 'informative' })
   @IsOptional()
   @IsEnum(EDITORIAL_TONES)
   tone?: (typeof EDITORIAL_TONES)[number];
+
+  @ApiPropertyOptional({
+    example: 'Enfatiza por que la critica pega directo en el artista y evita un tono panfletario.',
+    maxLength: 600,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  editorialContext?: string;
 
   @ApiPropertyOptional({ example: 5, minimum: 1, maximum: 5 })
   @IsOptional()

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   BadGatewayException,
   Injectable,
   InternalServerErrorException,
@@ -473,6 +474,7 @@ export class NewsService {
 
     try {
       const editorialContext = input.editorialContext?.trim();
+      this.ensureEditorialContextForTone(input.tone, editorialContext);
       const editorialDirection = this.resolveEditorialDirection(
         input.editorialRating,
       );
@@ -895,6 +897,23 @@ export class NewsService {
       .replace(/&nbsp;/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  private ensureEditorialContextForTone(
+    tone: string | undefined,
+    editorialContext?: string,
+  ): void {
+    if (tone !== 'critical' && tone !== 'positive') {
+      return;
+    }
+
+    if (editorialContext?.trim()) {
+      return;
+    }
+
+    throw new BadRequestException(
+      'editorialContext es obligatorio cuando el tono es critical o positive',
+    );
   }
 
   private shouldEnrichBeforeSendToN8n(item: NewsItem): boolean {

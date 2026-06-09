@@ -103,9 +103,9 @@ export class UpdateNewsStatusDto {
 export class SendToN8nDto {
   @ApiPropertyOptional({
     enum: EDITORIAL_TONES,
-    example: 'automatic',
+    example: 'informative',
     description:
-      'Tono editorial opcional. Si viene automatic o se omite, backend resuelve el tono final segun heuristica y rating.',
+      'Tono editorial opcional. Si no viene, backend usa informative por defecto.',
   })
   @IsOptional()
   @IsEnum(EDITORIAL_TONES)
@@ -129,7 +129,7 @@ export class SendToN8nDto {
       'El foco critico debe ir en los insultos o ataques dirigidos al artista.',
     maxLength: 600,
     description:
-      'Contexto editorial opcional para orientar el enfoque del articulo.',
+      'Contexto editorial obligatorio para tonos critical o positive; opcional para informative.',
   })
   @IsOptional()
   @IsString()

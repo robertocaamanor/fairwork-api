@@ -60,6 +60,7 @@ interface GenerateTopicProposalsInput {
   topicId?: string;
   newsIds?: string[];
   tone: string;
+  editorialContext?: string;
   requestedProposals: number;
   jwt: string;
   userId: string;
@@ -85,6 +86,7 @@ interface N8nTopicPayload {
   toneReason?: string;
   toneSignals?: string[];
   toneProfiles?: string[];
+  editorialContext?: string;
   requestedProposals: number;
   createdByUserId: string;
   jwt: string;
@@ -312,6 +314,8 @@ export class EditorialService {
   async generateTopicProposals(
     input: GenerateTopicProposalsInput,
   ): Promise<unknown> {
+    this.ensureEditorialContextForTone(input.tone, input.editorialContext);
+
     const user = await this.usersService.findById(input.userId);
 
     if (!user.isActive) {
@@ -671,7 +675,7 @@ export class EditorialService {
     const toneDecision = resolveEditorialTone({
       requestedTone: input.tone,
       title: topic.theme,
-      extraTexts: topic.sources.flatMap((source) => {
+      extraTexts: [input.editorialContext, ...topic.sources.flatMap((source) => {
         const candidate = source as Record<string, unknown>;
 
         return [
@@ -681,7 +685,7 @@ export class EditorialService {
           candidate.cleanContent,
           candidate.fullContent,
         ].filter((value): value is string => typeof value === 'string');
-      }),
+      })],
     });
 
     return {
@@ -693,6 +697,7 @@ export class EditorialService {
       toneReason: toneDecision.reason,
       toneSignals: toneDecision.matchedExpressions,
       toneProfiles: toneDecision.matchedProfiles,
+      editorialContext: input.editorialContext,
       requestedProposals: input.requestedProposals,
       createdByUserId: input.userId,
       jwt: input.jwt,
@@ -700,6 +705,23 @@ export class EditorialService {
         this.buildN8nSourcePayload(source, topic.category),
       ),
     };
+  }
+
+  private ensureEditorialContextForTone(
+    tone: string | undefined,
+    editorialContext?: string,
+  ): void {
+    if (tone !== 'critical' && tone !== 'positive') {
+      return;
+    }
+
+    if (editorialContext?.trim()) {
+      return;
+    }
+
+    throw new BadRequestException(
+      'editorialContext es obligatorio cuando el tono es critical o positive',
+    );
   }
 
   private async resolveTopicCluster(
