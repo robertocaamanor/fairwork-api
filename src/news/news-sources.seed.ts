@@ -24,11 +24,14 @@ import { DIRECT_RSS } from './seeds/direct-rss.seed';
 
 const GOOGLE_NEWS_SEARCH_WINDOW = '2d';
 const GOOGLE_NEWS_MAX_AGE_HOURS = '48';
+const GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS = ['tvenserio.com'];
+
+const GOOGLE_NEWS_EXCLUDED_DOMAINS = buildGoogleNewsExcludedDomains();
 
 const googleNewsSelectors = {
   maxAgeHours: GOOGLE_NEWS_MAX_AGE_HOURS,
   sortOrder: 'desc',
-  excludedDomains: 'tvenserio.com',
+  excludedDomains: GOOGLE_NEWS_EXCLUDED_DOMAINS.join(','),
 };
 
 type GoogleNewsLocale = {
@@ -101,9 +104,49 @@ function buildGoogleNewsSearchUrl(
   locale: GoogleNewsLocale,
 ): string {
   const parsed = new URL('https://news.google.com/rss/search');
-  parsed.searchParams.set('q', `${query.trim()} when:${GOOGLE_NEWS_SEARCH_WINDOW}`);
+  const exclusionTerms = GOOGLE_NEWS_EXCLUDED_DOMAINS.map(
+    (domain) => `-site:${domain}`,
+  ).join(' ');
+
+  parsed.searchParams.set(
+    'q',
+    `${query.trim()} ${exclusionTerms} when:${GOOGLE_NEWS_SEARCH_WINDOW}`.trim(),
+  );
   parsed.searchParams.set('hl', locale.hl);
   parsed.searchParams.set('gl', locale.gl);
   parsed.searchParams.set('ceid', locale.ceid);
   return parsed.toString();
 }
+
+function buildGoogleNewsExcludedDomains(): string[] {
+  const domains = new Set<string>(GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS);
+
+  for (const entry of DIRECT_RSS) {
+    for (const feed of entry.feeds) {
+      const normalizedDomain = normalizeExcludedDomain(feed.url);
+
+      if (normalizedDomain) {
+        domains.add(normalizedDomain);
+      }
+    }
+  }
+
+  return Array.from(domains).sort();
+}
+
+function normalizeExcludedDomain(url: string): string | null {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    return hostname
+      .replace(/^(www\.|m\.|feeds\.)/, '')
+      .trim();
+  } catch {
+    return null;
+  }
+}
+
+export const TEST_ONLY = {
+  buildGoogleNewsExcludedDomains,
+  normalizeExcludedDomain,
+};
