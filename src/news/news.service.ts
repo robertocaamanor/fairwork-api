@@ -35,6 +35,7 @@ import { normalizeDate } from '../common/utils/date.utils';
 @Injectable()
 export class NewsService {
   private readonly logger = new Logger(NewsService.name);
+  private readonly sourceConcurrency = this.getSourceConcurrency();
   private scrapeRun?: Promise<{
     sourcesProcessed: number;
     inserted: number;
@@ -312,36 +313,27 @@ export class NewsService {
     let inserted = 0;
     let deduplicated = 0;
 
-    for (const source of activeSources) {
-      try {
-        const scrapedItems = await this.scrapeSource(source);
-        scrapedItems.sort((left, right) => {
-          const leftTime =
-            left.publishedAt instanceof Date ? left.publishedAt.getTime() : 0;
-          const rightTime =
-            right.publishedAt instanceof Date ? right.publishedAt.getTime() : 0;
+    this.logger.log(
+      `Procesando ${activeSources.length} fuente(s) activas con concurrencia ${this.sourceConcurrency}`,
+    );
 
-          return rightTime - leftTime;
-        });
+    for (
+      let startIndex = 0;
+      startIndex < activeSources.length;
+      startIndex += this.sourceConcurrency
+    ) {
+      const sourceBatch = activeSources.slice(
+        startIndex,
+        startIndex + this.sourceConcurrency,
+      );
 
-        for (const item of scrapedItems) {
-          try {
-            const insertedNow = await this.saveScrapedItem(item);
-            if (insertedNow) {
-              inserted += 1;
-            } else {
-              deduplicated += 1;
-            }
-          } catch (error) {
-            this.logger.warn(
-              `No se pudo procesar item de ${source.name}: ${String(error)}`,
-            );
-          }
-        }
-      } catch (error) {
-        this.logger.warn(
-          `No se pudo scrapear la fuente ${source.name}: ${String(error)}`,
-        );
+      const batchResults = await Promise.all(
+        sourceBatch.map(async (source) => this.processSource(source)),
+      );
+
+      for (const result of batchResults) {
+        inserted += result.inserted;
+        deduplicated += result.deduplicated;
       }
     }
 
@@ -350,6 +342,58 @@ export class NewsService {
       inserted,
       deduplicated,
     };
+  }
+
+  private getSourceConcurrency(): number {
+    const rawValue = Number(process.env.SCRAPE_SOURCE_CONCURRENCY ?? 8);
+
+    if (!Number.isFinite(rawValue) || rawValue < 1) {
+      return 8;
+    }
+
+    return Math.min(Math.floor(rawValue), 20);
+  }
+
+  private async processSource(source: NewsSource): Promise<{
+    inserted: number;
+    deduplicated: number;
+  }> {
+    try {
+      const scrapedItems = await this.scrapeSource(source);
+      scrapedItems.sort((left, right) => {
+        const leftTime =
+          left.publishedAt instanceof Date ? left.publishedAt.getTime() : 0;
+        const rightTime =
+          right.publishedAt instanceof Date ? right.publishedAt.getTime() : 0;
+
+        return rightTime - leftTime;
+      });
+
+      let inserted = 0;
+      let deduplicated = 0;
+
+      for (const item of scrapedItems) {
+        try {
+          const insertedNow = await this.saveScrapedItem(item);
+          if (insertedNow) {
+            inserted += 1;
+          } else {
+            deduplicated += 1;
+          }
+        } catch (error) {
+          this.logger.warn(
+            `No se pudo procesar item de ${source.name}: ${String(error)}`,
+          );
+        }
+      }
+
+      return { inserted, deduplicated };
+    } catch (error) {
+      this.logger.warn(
+        `No se pudo scrapear la fuente ${source.name}: ${String(error)}`,
+      );
+      return { inserted: 0, deduplicated: 0 };
+    }
   }
 
   async hasRecentNews(windowMinutes: number): Promise<boolean> {

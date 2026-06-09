@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/seed.ts",
     "clear:news": "ts-node -r tsconfig-paths/register clear-news.ts",
-    "reset:google-news": "ts-node -r tsconfig-paths/register scripts/reset-google-news-sources.ts"
+    "reset:google-news": "ts-node -r tsconfig-paths/register scripts/reset-google-news-sources.ts",
+    "migrate:news-sources-url": "ts-node scripts/run-expand-news-sources-url.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

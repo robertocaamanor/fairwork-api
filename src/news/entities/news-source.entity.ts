@@ -45,7 +45,7 @@ export class NewsSource {
   @Column({ length: 120 })
   name: string;
 
-  @Column({ length: 500 })
+  @Column({ type: 'text' })
   url: string;
 
   @Column({ type: 'enum', enum: NEWS_SOURCE_TYPES })
