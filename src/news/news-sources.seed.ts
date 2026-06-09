@@ -24,7 +24,11 @@ import { DIRECT_RSS } from './seeds/direct-rss.seed';
 
 const GOOGLE_NEWS_SEARCH_WINDOW = '2d';
 const GOOGLE_NEWS_MAX_AGE_HOURS = '48';
-const GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS = ['tvenserio.com'];
+const GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS = [
+  'facebook.com',
+  'instagram.com',
+  'tvenserio.com',
+];
 
 const GOOGLE_NEWS_EXCLUDED_DOMAINS = buildGoogleNewsExcludedDomains();
 

@@ -6,6 +6,8 @@ describe('news source seeds', () => {
 
     expect(domains).toEqual(
       expect.arrayContaining([
+        'facebook.com',
+        'instagram.com',
         'tvenserio.com',
         'fotech.cl',
         'limalimon.cl',
