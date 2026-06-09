@@ -12,6 +12,7 @@ import axios from 'axios';
 import { In, Repository } from 'typeorm';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { NewsItem } from '../news/entities/news-item.entity';
 import type { NewsCategory } from '../news/entities/news-source.entity';
@@ -102,20 +103,24 @@ export interface EditorialTopicSummary {
 }
 
 export class EditorialReviewQueryDto {
+  @ApiPropertyOptional({ enum: EDITORIAL_REVIEW_STATUSES, example: 'pending_review' })
   @IsOptional()
   @IsEnum(EDITORIAL_REVIEW_STATUSES)
   status?: EditorialReviewStatus;
 
+  @ApiPropertyOptional({ example: 'tv_chilena' })
   @IsOptional()
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional({ example: 60, minimum: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   minScore?: number;
 
+  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 200 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

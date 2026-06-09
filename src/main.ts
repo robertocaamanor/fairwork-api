@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 function normalizeOrigin(origin: string): string {
@@ -18,6 +19,16 @@ function parseAllowedOrigins(...values: Array<string | undefined>): string[] {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Fairwork API')
+    .setDescription('Documentacion de la API de scraping y flujo editorial')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+
+  SwaggerModule.setup('docs', app, swaggerDocument);
+
   const allowedOrigins = parseAllowedOrigins(
     process.env.FRONTEND_URL,
     process.env.N8N_URL,
