@@ -28,6 +28,7 @@ import { ScrapedNewsInput } from './scrapers/scraper.interface';
 import { isExcludedFromGoogleNewsInspector } from './scrapers/seed-source-coverage';
 import { ArticleResolverService } from './services/article-resolver.service';
 import { NewsSourceSeederService } from './services/news-source-seeder.service';
+import { resolveEditorialTone } from './editorial-tone.util';
 import { normalizeDate } from '../common/utils/date.utils';
 
 @Injectable()
@@ -475,6 +476,14 @@ export class NewsService {
       const editorialDirection = this.resolveEditorialDirection(
         input.editorialRating,
       );
+      const toneDecision = resolveEditorialTone({
+        requestedTone: input.tone,
+        editorialRating: input.editorialRating,
+        title: item.title,
+        summary: item.summary,
+        content: bestContent,
+        extraTexts: [editorialContext],
+      });
 
       await axios.post(
         webhookUrl,
@@ -493,6 +502,11 @@ export class NewsService {
           status: item.status,
           editorialRating: input.editorialRating,
           editorialDirection,
+          tone: toneDecision.tone,
+          toneSource: toneDecision.source,
+          toneReason: toneDecision.reason,
+          toneSignals: toneDecision.matchedExpressions,
+          toneProfiles: toneDecision.matchedProfiles,
           shouldCriticize: editorialDirection === 'negative',
           editorialContext: editorialContext || undefined,
           titleStyle: 'sentence_case',

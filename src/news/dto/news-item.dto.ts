@@ -11,6 +11,7 @@ import { Type } from 'class-transformer';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { NEWS_CATEGORIES } from '../entities/news-source.entity';
 import { NEWS_STATUS } from '../entities/news-item.entity';
+import { EDITORIAL_TONES } from '../editorial-tone.util';
 import type { NewsCategory } from '../entities/news-source.entity';
 import type { NewsStatus } from '../entities/news-item.entity';
 
@@ -100,6 +101,16 @@ export class UpdateNewsStatusDto {
 }
 
 export class SendToN8nDto {
+  @ApiPropertyOptional({
+    enum: EDITORIAL_TONES,
+    example: 'automatic',
+    description:
+      'Tono editorial opcional. Si viene automatic o se omite, backend resuelve el tono final segun heuristica y rating.',
+  })
+  @IsOptional()
+  @IsEnum(EDITORIAL_TONES)
+  tone?: (typeof EDITORIAL_TONES)[number];
+
   @ApiProperty({
     example: 4,
     minimum: 1,

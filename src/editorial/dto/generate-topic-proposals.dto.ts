@@ -1,6 +1,7 @@
 import {
   ArrayNotEmpty,
   IsArray,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -11,6 +12,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { EDITORIAL_TONES } from '../../news/editorial-tone.util';
 
 export class GenerateTopicProposalsDto {
   @ApiPropertyOptional({
@@ -23,11 +25,10 @@ export class GenerateTopicProposalsDto {
   @IsUUID('4', { each: true })
   newsIds?: string[];
 
-  @ApiPropertyOptional({ example: 'analitico' })
+  @ApiPropertyOptional({ enum: EDITORIAL_TONES, example: 'automatic' })
   @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  tone?: string;
+  @IsEnum(EDITORIAL_TONES)
+  tone?: (typeof EDITORIAL_TONES)[number];
 
   @ApiPropertyOptional({ example: 5, minimum: 1, maximum: 5 })
   @IsOptional()

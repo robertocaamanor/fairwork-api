@@ -17,6 +17,7 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { NewsItem } from '../news/entities/news-item.entity';
 import type { NewsCategory } from '../news/entities/news-source.entity';
 import { ArticleResolverService } from '../news/services/article-resolver.service';
+import { resolveEditorialTone } from '../news/editorial-tone.util';
 import { UsersService } from '../users/users.service';
 import { CreateEditorialTopicDto } from './dto/create-editorial-topic.dto';
 import { CreateTopicProposalsDto } from './dto/create-topic-proposals.dto';
@@ -80,6 +81,10 @@ interface N8nTopicPayload {
   theme: string;
   category: NewsCategory;
   tone: string;
+  toneSource?: string;
+  toneReason?: string;
+  toneSignals?: string[];
+  toneProfiles?: string[];
   requestedProposals: number;
   createdByUserId: string;
   jwt: string;
@@ -663,11 +668,31 @@ export class EditorialService {
     input: GenerateTopicProposalsInput,
     topic: ResolvedTopicCluster,
   ): N8nTopicPayload {
+    const toneDecision = resolveEditorialTone({
+      requestedTone: input.tone,
+      title: topic.theme,
+      extraTexts: topic.sources.flatMap((source) => {
+        const candidate = source as Record<string, unknown>;
+
+        return [
+          candidate.title,
+          candidate.summary,
+          candidate.content,
+          candidate.cleanContent,
+          candidate.fullContent,
+        ].filter((value): value is string => typeof value === 'string');
+      }),
+    });
+
     return {
       ...(input.topicId ? { topicId: input.topicId } : {}),
       theme: topic.theme,
       category: topic.category,
-      tone: input.tone,
+      tone: toneDecision.tone,
+      toneSource: toneDecision.source,
+      toneReason: toneDecision.reason,
+      toneSignals: toneDecision.matchedExpressions,
+      toneProfiles: toneDecision.matchedProfiles,
       requestedProposals: input.requestedProposals,
       createdByUserId: input.userId,
       jwt: input.jwt,

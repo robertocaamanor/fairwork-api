@@ -87,7 +87,7 @@ export class EditorialController {
 
     return this.editorialService.generateTopicProposals({
       newsIds: body.newsIds ?? [],
-      tone: body.tone ?? 'informativo',
+      tone: body.tone ?? 'automatic',
       requestedProposals: body.requestedProposals ?? 5,
       jwt,
       userId: req.user.sub,
@@ -107,7 +107,7 @@ export class EditorialController {
 
     return this.editorialService.generateTopicProposals({
       topicId,
-      tone: body.tone ?? 'informativo',
+      tone: body.tone ?? 'automatic',
       requestedProposals: body.requestedProposals ?? 5,
       jwt,
       userId: req.user.sub,
