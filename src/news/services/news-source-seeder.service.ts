@@ -38,12 +38,7 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
       .filter((url): url is string => typeof url === 'string');
 
     for (const seed of seeds) {
-      const existing = await this.newsSourceRepository.findOne({
-        where: [
-          ...(seed.url ? [{ url: seed.url }] : []),
-          ...(seed.name ? [{ name: seed.name }] : []),
-        ],
-      });
+      const existing = await this.findExistingSeed(seed);
 
       if (!existing) {
         await this.newsSourceRepository.save(
@@ -84,5 +79,27 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
     await qb.execute();
 
     this.logger.log(`News sources seeded: ${seeds.length}`);
+  }
+
+  private async findExistingSeed(
+    seed: Partial<NewsSource>,
+  ): Promise<NewsSource | null> {
+    if (seed.name) {
+      const existingByName = await this.newsSourceRepository.findOne({
+        where: { name: seed.name },
+      });
+
+      if (existingByName) {
+        return existingByName;
+      }
+    }
+
+    if (seed.url && seed.category) {
+      return this.newsSourceRepository.findOne({
+        where: { url: seed.url, category: seed.category },
+      });
+    }
+
+    return null;
   }
 }

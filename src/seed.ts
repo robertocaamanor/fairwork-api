@@ -61,7 +61,12 @@ async function runSeed() {
     .filter((url): url is string => typeof url === 'string');
 
   for (const seed of seeds) {
-    const existing = await repo.findOne({ where: { url: seed.url } });
+    const existing = seed.name
+      ? await repo.findOne({ where: { name: seed.name } })
+      : seed.url && seed.category
+        ? await repo.findOne({ where: { url: seed.url, category: seed.category } })
+        : null;
+
     if (!existing) {
       await repo.save(repo.create(seed));
     } else {

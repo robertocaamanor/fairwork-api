@@ -8,6 +8,7 @@ export type GoogleSearchEntry = {
 };
 
 export type DirectRssFeed = {
+  name?: string;
   url: string;
   category: NewsSource['category'];
   selectors?: Record<string, string>;

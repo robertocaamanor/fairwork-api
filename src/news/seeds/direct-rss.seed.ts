@@ -5,15 +5,15 @@ export const DIRECT_RSS: DirectRssEntry[] = [
   {
     name: 'Fotech',
     feeds: [
-      { url: 'https://www.fotech.cl/category/television/feed/',  category: 'tv_chilena' },
-      { url: 'https://www.fotech.cl/tag/fiebre-de-baile/feed/', category: 'fiebre_de_baile' },
+      { name: 'Fotech Televisión', url: 'https://www.fotech.cl/category/television/feed/',  category: 'tv_chilena' },
+      { name: 'Fotech Fiebre de Baile', url: 'https://www.fotech.cl/tag/fiebre-de-baile/feed/', category: 'fiebre_de_baile' },
     ],
   },
   {
     name: 'Lima Limón',
     feeds: [
       { url: 'https://www.limalimon.cl/feed/',                                  category: 'tv_chilena' },
-      { url: 'https://www.limalimon.cl/categoria/fiebre-de-baile/feed/',        category: 'fiebre_de_baile' },
+      { name: 'Lima Limón Fiebre de Baile', url: 'https://www.limalimon.cl/categoria/fiebre-de-baile/feed/',        category: 'fiebre_de_baile' },
     ],
   },
   {
@@ -25,29 +25,32 @@ export const DIRECT_RSS: DirectRssEntry[] = [
   {
     name: 'Cooperativa',
     feeds: [
-      { url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_102__1.xml', category: 'tv_chilena' },
-      { url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_11__1.xml',  category: 'musica' },
-      { url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_303__1.xml', category: 'streaming' },
-      { url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_8___1.xml',    category: 'tecnologia' },
+      { name: 'Cooperativa Televisión', url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_102__1.xml', category: 'tv_chilena' },
+      { name: 'Cooperativa Música', url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_11__1.xml',  category: 'musica' },
+      { name: 'Cooperativa Streaming', url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4_303__1.xml', category: 'streaming' },
+      { name: 'Cooperativa Tecnología', url: 'https://www.cooperativa.cl/noticias/site/tax/port/all/rss_8___1.xml',    category: 'tecnologia' },
     ],
   },
   {
     name: 'Bio-Bio Chile',
     feeds: [
       { 
+        name: 'Bio-Bio Chile Televisión',
         url: 'https://www.biobiochile.cl/static/feed-rss', 
         category: 'tv_chilena',
-        selectors: { includedUrlPatterns: '/lista/categorias/tv' }
+        selectors: { includedUrlPatterns: '/noticias/espectaculos-y-tv/tv/' }
       },
       { 
+        name: 'Bio-Bio Chile Música',
         url: 'https://www.biobiochile.cl/static/feed-rss', 
         category: 'musica',
-        selectors: { includedUrlPatterns: '/lista/categorias/musica' }
+        selectors: { includedUrlPatterns: '/noticias/artes-y-cultura/musica/' }
       },
       { 
+        name: 'Bio-Bio Chile Cine',
         url: 'https://www.biobiochile.cl/static/feed-rss', 
         category: 'cine',
-        selectors: { includedUrlPatterns: '/lista/categorias/cine-y-series' }
+        selectors: { includedUrlPatterns: '/noticias/espectaculos-y-tv/cine-y-series/' }
       },
     ],
   },
@@ -55,14 +58,14 @@ export const DIRECT_RSS: DirectRssEntry[] = [
     name: 'Publimetro',
     feeds: [
       {
-        url: 'https://www.publimetro.cl/arc/outboundfeeds/rss/?outputType=xml',
+        name: 'Publimetro Entretenimiento',
+        url: 'https://www.publimetro.cl/arc/outboundfeeds/rss/category/entretenimiento/?outputType=xml',
         category: 'tv_chilena',
-        selectors: { includedUrlPatterns: '/entretenimiento/' }
       },
       {
-        url: 'https://www.publimetro.cl/arc/outboundfeeds/rss/?outputType=xml',
+        name: 'Publimetro Tecnología',
+        url: 'https://www.publimetro.cl/arc/outboundfeeds/rss/category/tecnologia/?outputType=xml',
         category: 'tecnologia',
-        selectors: { includedUrlPatterns: '/tecnologia/' }
       },
     ],
   },
@@ -79,27 +82,27 @@ export const DIRECT_RSS: DirectRssEntry[] = [
   {
     name: 'Variety',
     feeds: [
-      { url: 'https://variety.com/v/tv/feed/',    category: 'tv_usa' },
-      { url: 'https://variety.com/v/music/feed/', category: 'musica' },
+      { name: 'Variety TV', url: 'https://variety.com/v/tv/feed/',    category: 'tv_usa' },
+      { name: 'Variety Music', url: 'https://variety.com/v/music/feed/', category: 'musica' },
     ],
   },
   {
     name: 'Rolling Stone',
     feeds: [
-      { url: 'https://www.rollingstone.com/tv-movies/feed/', category: 'tv_usa' },
-      { url: 'https://www.rollingstone.com/music/feed/',     category: 'musica' },
+      { name: 'Rolling Stone TV & Movies', url: 'https://www.rollingstone.com/tv-movies/feed/', category: 'tv_usa' },
+      { name: 'Rolling Stone Music', url: 'https://www.rollingstone.com/music/feed/',     category: 'musica' },
     ],
   },
   {
     name: 'Billboard',
     feeds: [
-      { url: 'https://www.billboard.com/c/music/feed/', category: 'musica' },
+      { name: 'Billboard Music', url: 'https://www.billboard.com/c/music/feed/', category: 'musica' },
     ],
   },
   {
     name: 'Portal Famosos',
     feeds: [
-      { url: 'https://portalfamosos.com.br/category/a-list/musica/feed/', category: 'musica' },
+      { name: 'Portal Famosos Música', url: 'https://portalfamosos.com.br/category/a-list/musica/feed/', category: 'musica' },
     ],
   },
   {
@@ -111,13 +114,13 @@ export const DIRECT_RSS: DirectRssEntry[] = [
   {
     name: 'Folha F5',
     feeds: [
-      { url: 'http://feeds.folha.uol.com.br/f5/musica/rss091.xml', category: 'musica' },
+      { name: 'Folha F5 Música', url: 'http://feeds.folha.uol.com.br/f5/musica/rss091.xml', category: 'musica' },
     ],
   },
   {
     name: 'The Guardian',
     feeds: [
-      { url: 'https://www.theguardian.com/music/rss', category: 'musica' },
+      { name: 'The Guardian Music', url: 'https://www.theguardian.com/music/rss', category: 'musica' },
     ],
   },
   {

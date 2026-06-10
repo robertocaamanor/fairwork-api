@@ -125,8 +125,8 @@ export function buildNewsSourceSeeds(): Array<Partial<NewsSource>> {
 
   const rssSources: Array<Partial<NewsSource>> = DIRECT_RSS.flatMap(
     ({ name, feeds }) =>
-      feeds.map(({ url, category, selectors }) => ({
-        name,
+      feeds.map(({ name: feedName, url, category, selectors }) => ({
+        name: feedName ?? name,
         url,
         type: 'rss' as const,
         category,
