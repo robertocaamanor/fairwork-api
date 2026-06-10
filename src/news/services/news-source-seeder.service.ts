@@ -39,7 +39,10 @@ export class NewsSourceSeederService implements OnApplicationBootstrap {
 
     for (const seed of seeds) {
       const existing = await this.newsSourceRepository.findOne({
-        where: { url: seed.url },
+        where: [
+          ...(seed.url ? [{ url: seed.url }] : []),
+          ...(seed.name ? [{ name: seed.name }] : []),
+        ],
       });
 
       if (!existing) {

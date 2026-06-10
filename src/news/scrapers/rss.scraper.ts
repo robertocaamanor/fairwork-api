@@ -85,6 +85,7 @@ export class RssScraper implements NewsScraper {
               maxAgeHours,
             ) &&
             !this.isExcludedDomain(item.originalUrl, excludedDomains) &&
+            !this.hasExcludedDomainReference(item, excludedDomains) &&
             this.isIncludedUrl(item.originalUrl, includedUrlPatterns),
         );
 
@@ -129,6 +130,22 @@ export class RssScraper implements NewsScraper {
     } catch {
       return false;
     }
+  }
+
+  private hasExcludedDomainReference(
+    item: Pick<ScrapedNewsInput, 'title' | 'summary' | 'content'>,
+    excludedDomains: string[],
+  ): boolean {
+    if (excludedDomains.length === 0) {
+      return false;
+    }
+
+    const text = [item.title, item.summary, item.content]
+      .filter((value): value is string => typeof value === 'string')
+      .join(' ')
+      .toLowerCase();
+
+    return excludedDomains.some((domain) => text.includes(domain));
   }
 
   private isIncludedUrl(url: string, patterns: string[]): boolean {

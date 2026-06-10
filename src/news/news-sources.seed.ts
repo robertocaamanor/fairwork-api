@@ -26,11 +26,19 @@ const GOOGLE_NEWS_SEARCH_WINDOW = '2d';
 const GOOGLE_NEWS_MAX_AGE_HOURS = '48';
 const GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS = [
   'facebook.com',
+  'imecbrachire.blog',
   'instagram.com',
+  'napolike.com',
+  'onlyfans.com',
+  'showbizjobs.com',
   'threads.com',
   'tiktok.com',
   'tvenserio.com',
   'x.com',
+  'xhamster.com',
+  'xvideos.com',
+  'youtube.com',
+  'youtu.be',
 ];
 
 const GOOGLE_NEWS_EXCLUDED_DOMAINS = buildGoogleNewsExcludedDomains();
@@ -152,6 +160,10 @@ function buildGoogleNewsSearchUrl(
 function buildGoogleNewsExcludedDomains(): string[] {
   const domains = new Set<string>(GOOGLE_NEWS_STATIC_EXCLUDED_DOMAINS);
 
+  for (const domain of readEnvExcludedDomains()) {
+    domains.add(domain);
+  }
+
   for (const entry of DIRECT_RSS) {
     for (const feed of entry.feeds) {
       const normalizedDomain = normalizeExcludedDomain(feed.url);
@@ -165,9 +177,24 @@ function buildGoogleNewsExcludedDomains(): string[] {
   return Array.from(domains).sort();
 }
 
+function readEnvExcludedDomains(): string[] {
+  return (process.env.GOOGLE_NEWS_EXCLUDED_DOMAINS ?? '')
+    .split(',')
+    .map((value) => normalizeExcludedDomain(value) ?? value.trim().toLowerCase())
+    .filter((value) => value.length > 0);
+}
+
 function normalizeExcludedDomain(url: string): string | null {
+  const normalizedValue = url.trim().toLowerCase();
+  if (!normalizedValue) {
+    return null;
+  }
+
   try {
-    const hostname = new URL(url).hostname.toLowerCase();
+    const parsedUrl = normalizedValue.includes('://')
+      ? normalizedValue
+      : `https://${normalizedValue}`;
+    const hostname = new URL(parsedUrl).hostname.toLowerCase();
 
     return hostname
       .replace(/^(www\.|m\.|feeds\.)/, '')

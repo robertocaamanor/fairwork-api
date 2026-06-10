@@ -21,6 +21,7 @@
     "seed": "node dist/src/seed.js",
     "clear:news": "node dist/clear-news.js",
     "reset:google-news": "node dist/scripts/reset-google-news-sources.js",
+    "reset:google-news-timeline": "node dist/scripts/reset-google-news-timeline.js",
     "migrate:news-sources-url": "node dist/scripts/run-expand-news-sources-url.js",
     "migrate:news-items-source-url": "node dist/scripts/run-expand-news-items-source-url.js"
   },

@@ -108,6 +108,8 @@ export class NewsService {
       this.applyCategoryRelevanceFilter(qb, filter.category);
     }
 
+    this.applyGlobalTimelineBlocklist(qb);
+
     if (filter.source) {
       qb.andWhere('news.sourceName ILIKE :source', {
         source: `%${filter.source.trim()}%`,
@@ -173,6 +175,45 @@ export class NewsService {
         ),
       );
     }
+  }
+
+  private applyGlobalTimelineBlocklist(
+    qb: SelectQueryBuilder<NewsItem>,
+  ): void {
+    const searchableText =
+      "concat_ws(' ', news.title, news.summary, news.content, news.sourceName, news.originalUrl, news.resolvedUrl, news.resolvedSourceDomain)";
+    const blockedTerms = this.getGlobalTimelineBlockedTerms();
+
+    qb.andWhere(
+      `NOT (${blockedTerms
+        .map((_, index) => `${searchableText} ILIKE :globalBlocked${index}`)
+        .join(' OR ')})`,
+      Object.fromEntries(
+        blockedTerms.map((term, index) => [
+          `globalBlocked${index}`,
+          `%${term}%`,
+        ]),
+      ),
+    );
+  }
+
+  private getGlobalTimelineBlockedTerms(): string[] {
+    return [
+      'instagram.com',
+      'facebook.com',
+      'twitter.com',
+      'youtube.com',
+      'youtu.be',
+      'x.com',
+      'threads.com',
+      'tiktok.com',
+      'xvideos',
+      'xhamster',
+      'onlyfans',
+      'casino',
+      'betting',
+      'apuestas',
+    ];
   }
 
   private getCategoryRelevanceRule(
@@ -922,6 +963,10 @@ export class NewsService {
       return false;
     }
 
+    if (this.isBlockedTimelineItem(item)) {
+      return false;
+    }
+
     const rawNormalizedTitle = this.normalizeTitle(item.title || '');
     const quickDuplicateQb = this.newsItemRepository
       .createQueryBuilder('news')
@@ -960,6 +1005,10 @@ export class NewsService {
       },
     );
     const persistable = this.buildPersistableNewsPatch(baseEntity, enriched);
+
+    if (this.isBlockedTimelineItem({ ...item, ...persistable })) {
+      return false;
+    }
 
     const normalizedTitle = this.normalizeTitle(
       persistable.title || item.title || '',
@@ -1023,6 +1072,25 @@ export class NewsService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '')
       .trim();
+  }
+
+  private isBlockedTimelineItem(item: Partial<ScrapedNewsInput & NewsItem>): boolean {
+    const text = [
+      item.title,
+      item.summary,
+      item.content,
+      item.sourceName,
+      item.originalUrl,
+      item.resolvedUrl,
+      item.resolvedSourceDomain,
+    ]
+      .filter((value): value is string => typeof value === 'string')
+      .join(' ')
+      .toLowerCase();
+
+    return this.getGlobalTimelineBlockedTerms().some((term) =>
+      text.includes(term.toLowerCase()),
+    );
   }
 
   private buildPersistableNewsPatch(
