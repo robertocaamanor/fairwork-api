@@ -30,8 +30,8 @@ const TECH_NAMES: string[] = [
 export const TECH_TOPICS: GoogleSearchEntry[] = TECH_NAMES.map((name) => ({
   name,
   category: 'tecnologia',
-  queryEs: name,
-  queryEn: name,
+  queryEs: `${name} tecnologia app inteligencia artificial dispositivo`,
+  queryEn: `${name} technology app artificial intelligence device`,
 }));
 
 // Panel: streaming — búsqueda general
@@ -56,6 +56,6 @@ export const STREAMING_PLATFORMS: GoogleSearchEntry[] =
   STREAMING_PLATFORM_NAMES.map((name) => ({
     name,
     category: 'streaming',
-    queryEs: name,
-    queryEn: name,
+    queryEs: `${name} streaming series peliculas estrenos plataforma`,
+    queryEn: `${name} streaming series movies premieres platform`,
   }));

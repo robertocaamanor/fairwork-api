@@ -66,6 +66,6 @@ const ARTIST_NAMES: string[] = [
 export const MUSIC_ARTISTS: GoogleSearchEntry[] = ARTIST_NAMES.map((name) => ({
   name,
   category: 'musica',
-  queryEs: name,
-  queryEn: name,
+  queryEs: `${name} cantante musica concierto disco`,
+  queryEn: `${name} singer music concert album`,
 }));

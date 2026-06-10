@@ -105,10 +105,7 @@ export class NewsService {
 
     if (filter.category) {
       qb.andWhere('news.category = :category', { category: filter.category });
-    }
-
-    if (filter.category === 'tv_italiana') {
-      this.applyItalianTvRelevanceFilter(qb);
+      this.applyCategoryRelevanceFilter(qb, filter.category);
     }
 
     if (filter.source) {
@@ -136,43 +133,56 @@ export class NewsService {
     return qb.getMany();
   }
 
-  private applyItalianTvRelevanceFilter(
+  private applyCategoryRelevanceFilter(
     qb: SelectQueryBuilder<NewsItem>,
+    category: NewsCategory,
   ): void {
+    const rule = this.getCategoryRelevanceRule(category);
+
+    if (!rule) {
+      return;
+    }
+
     const searchableText =
-      "concat_ws(' ', news.title, news.summary, news.content, news.sourceName)";
-    const positiveTerms = [
-      'rai',
-      'mediaset',
-      'canale 5',
-      'la7',
-      'italia 1',
-      'rete 4',
-      'televisione italiana',
-      'tv italiana',
-      'programmi tv',
-      'conduttore',
-      'conduttrice',
-      'palinsesto',
-      'ascolti tv',
-      'domenica in',
-      'belve',
-      'porta a porta',
-      'che tempo che fa',
-      'fabio fazio',
-      'mara venier',
-      'francesca fagnani',
-      'carlo conti',
-      'amadeus',
-      'stefano de martino',
-      'antonella clerici',
-      'bruno vespa',
-    ];
-    const negativeTerms = [
+      "concat_ws(' ', news.title, news.summary, news.content, news.sourceName, news.originalUrl, news.resolvedUrl)";
+
+    if (rule.positiveTerms.length > 0) {
+      qb.andWhere(
+        `(${rule.positiveTerms
+          .map((_, index) => `${searchableText} ILIKE :${category}Positive${index}`)
+          .join(' OR ')})`,
+        Object.fromEntries(
+          rule.positiveTerms.map((term, index) => [
+            `${category}Positive${index}`,
+            `%${term}%`,
+          ]),
+        ),
+      );
+    }
+
+    if (rule.negativeTerms.length > 0) {
+      qb.andWhere(
+        `NOT (${rule.negativeTerms
+          .map((_, index) => `${searchableText} ILIKE :${category}Negative${index}`)
+          .join(' OR ')})`,
+        Object.fromEntries(
+          rule.negativeTerms.map((term, index) => [
+            `${category}Negative${index}`,
+            `%${term}%`,
+          ]),
+        ),
+      );
+    }
+  }
+
+  private getCategoryRelevanceRule(
+    category: NewsCategory,
+  ): { positiveTerms: string[]; negativeTerms: string[] } | null {
+    const sportsAndSpamTerms = [
       'mundial',
       'partido',
       'futbol',
-      'fútbol',
+      'fÃºtbol',
       'football',
       'soccer',
       'calcio',
@@ -181,30 +191,224 @@ export class NewsService {
       'copa',
       'rugby',
       'tennis',
+      'basket',
+      'nba',
+      'nfl',
+      'wta',
+      'championship',
+      'championships',
+      'en vivo',
+      'live stream',
+      'job',
+      'jobs',
+      'xvideos',
+      'xhxx',
+      'xhamster',
+      'porn',
+      'onlyfans',
+      'casino',
+      'betting',
+      'apuestas',
+      'youtube live',
+    ];
+    const policeCourtTerms = [
+      'corte',
+      'contralorÃ­a',
+      'contraloria',
+      'tribunal',
+      'fiscalÃ­a',
+      'fiscalia',
+      'prisiÃ³n preventiva',
+      'prision preventiva',
+      'homicidio',
+      'secuestro',
+      'secuestrado',
+      'detenido',
+      'carabineros',
+      'pdi',
+      'datos sensibles',
+      'hallan',
+      'accidente',
     ];
 
-    qb.andWhere(
-      `(${positiveTerms
-        .map((_, index) => `${searchableText} ILIKE :italianTvTerm${index}`)
-        .join(' OR ')})`,
-      Object.fromEntries(
-        positiveTerms.map((term, index) => [
-          `italianTvTerm${index}`,
-          `%${term}%`,
-        ]),
-      ),
-    );
-    qb.andWhere(
-      `NOT (${negativeTerms
-        .map((_, index) => `${searchableText} ILIKE :italianTvBlocked${index}`)
-        .join(' OR ')})`,
-      Object.fromEntries(
-        negativeTerms.map((term, index) => [
-          `italianTvBlocked${index}`,
-          `%${term}%`,
-        ]),
-      ),
-    );
+    const rules: Partial<
+      Record<NewsCategory, { positiveTerms: string[]; negativeTerms: string[] }>
+    > = {
+      tv_chilena: {
+        positiveTerms: [
+          'tvn',
+          'mega',
+          'chv',
+          'chilevisiÃ³n',
+          'chilevision',
+          'canal 13',
+          'la red',
+          'tv+',
+          'telecanal',
+          'matinal',
+          'reality',
+          'teleserie',
+          'programa',
+          'animador',
+          'animadora',
+          'conductor',
+          'conductora',
+          'rostro',
+          'rating',
+          'pantalla',
+          'fiebre de baile',
+          'la divina comida',
+          'mucho gusto',
+          'hay que decirlo',
+          'plan perfecto',
+        ],
+        negativeTerms: [...sportsAndSpamTerms, ...policeCourtTerms],
+      },
+      musica: {
+        positiveTerms: [
+          'mÃºsica',
+          'musica',
+          'cantante',
+          'canciÃ³n',
+          'cancion',
+          'disco',
+          'Ã¡lbum',
+          'album',
+          'single',
+          'concierto',
+          'festival',
+          'gira',
+          'tour',
+          'spotify',
+          'premios',
+          'grammy',
+          'billboard',
+          'dua lipa',
+          'tini',
+          'lali',
+          'katy perry',
+          'shakira',
+          'karol g',
+          'bad bunny',
+          'mon laferte',
+        ],
+        negativeTerms: [...sportsAndSpamTerms, ...policeCourtTerms],
+      },
+      tecnologia: {
+        positiveTerms: [
+          'tecnologÃ­a',
+          'tecnologia',
+          'inteligencia artificial',
+          'app',
+          'apps',
+          'software',
+          'smartphone',
+          'iphone',
+          'android',
+          'samsung',
+          'apple',
+          'openai',
+          'chatgpt',
+          'gemini',
+          'anthropic',
+          'xiaomi',
+          'lg',
+          'startup',
+          'ciberseguridad',
+          'internet',
+        ],
+        negativeTerms: [
+          ...sportsAndSpamTerms,
+          ...policeCourtTerms,
+          'tiktok',
+          'tÃ­os',
+          'tips',
+        ],
+      },
+      streaming: {
+        positiveTerms: [
+          'streaming',
+          'serie',
+          'series',
+          'pelÃ­cula',
+          'pelicula',
+          'documental',
+          'estreno',
+          'temporada',
+          'netflix',
+          'prime video',
+          'apple tv+',
+          'hbo max',
+          'max',
+          'paramount+',
+          'disney+',
+          'show',
+          'reality',
+        ],
+        negativeTerms: [...sportsAndSpamTerms, ...policeCourtTerms],
+      },
+      tv_italiana: {
+        positiveTerms: [
+          'rai',
+          'mediaset',
+          'canale 5',
+          'la7',
+          'italia 1',
+          'rete 4',
+          'televisione italiana',
+          'tv italiana',
+          'programmi tv',
+          'conduttore',
+          'conduttrice',
+          'palinsesto',
+          'ascolti tv',
+          'domenica in',
+          'belve',
+          'porta a porta',
+          'che tempo che fa',
+          'fabio fazio',
+          'mara venier',
+          'francesca fagnani',
+          'carlo conti',
+          'amadeus',
+          'stefano de martino',
+          'antonella clerici',
+          'bruno vespa',
+        ],
+        negativeTerms: [...sportsAndSpamTerms, ...policeCourtTerms],
+      },
+      sanremo: {
+        positiveTerms: [
+          'sanremo',
+          'festival di sanremo',
+          'festival de sanremo',
+          'carlo conti',
+          'amadeus',
+          'stefano de martino',
+          'stefano di martino',
+        ],
+        negativeTerms: [...sportsAndSpamTerms, ...policeCourtTerms],
+      },
+      cine: {
+        positiveTerms: [
+          'cine',
+          'pelÃ­cula',
+          'pelicula',
+          'film',
+          'estreno',
+          'taquilla',
+          'premios oscar',
+          'actor',
+          'actriz',
+          'director',
+          'directora',
+          'festival de cine',
+        ],
+        negativeTerms: [...sportsAndSpamTerms, ...policeCourtTerms],
+      },
+    };
+
+    return rules[category] ?? null;
   }
 
   async findRelatedNews(filter: RelatedNewsFilterDto): Promise<NewsItem[]> {
