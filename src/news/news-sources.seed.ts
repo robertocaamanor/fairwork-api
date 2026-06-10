@@ -1,6 +1,9 @@
 import { NewsSource } from './entities/news-source.entity';
 import type { GoogleSearchEntry } from './seeds/seed-entry.types';
-import { TV_CHANNELS_CHILE, TV_PERSONALITIES_CHILE } from './seeds/tv-chile.seed';
+import {
+  TV_CHANNELS_CHILE,
+  TV_PERSONALITIES_CHILE,
+} from './seeds/tv-chile.seed';
 import { TV_PROGRAMS } from './seeds/tv-programs.seed';
 import { MUSIC_GENERAL, MUSIC_ARTISTS } from './seeds/music-artists.seed';
 import { MUSIC_FESTIVALS } from './seeds/music-festivals.seed';
@@ -58,8 +61,14 @@ type GoogleNewsLocale = {
 };
 
 const GOOGLE_NEWS_LOCALES: GoogleNewsLocale[] = [
-  { suffix: 'ES', queryKey: 'queryEs', hl: 'es-419', gl: 'CL', ceid: 'CL:es-419' },
-  { suffix: 'EN', queryKey: 'queryEn', hl: 'en-US',  gl: 'US', ceid: 'US:en' },
+  {
+    suffix: 'ES',
+    queryKey: 'queryEs',
+    hl: 'es-419',
+    gl: 'CL',
+    ceid: 'CL:es-419',
+  },
+  { suffix: 'EN', queryKey: 'queryEn', hl: 'en-US', gl: 'US', ceid: 'US:en' },
 ];
 
 function getEnabledGoogleNewsLocales(): GoogleNewsLocale[] {
@@ -180,7 +189,9 @@ function buildGoogleNewsExcludedDomains(): string[] {
 function readEnvExcludedDomains(): string[] {
   return (process.env.GOOGLE_NEWS_EXCLUDED_DOMAINS ?? '')
     .split(',')
-    .map((value) => normalizeExcludedDomain(value) ?? value.trim().toLowerCase())
+    .map(
+      (value) => normalizeExcludedDomain(value) ?? value.trim().toLowerCase(),
+    )
     .filter((value) => value.length > 0);
 }
 
@@ -196,9 +207,7 @@ function normalizeExcludedDomain(url: string): string | null {
       : `https://${normalizedValue}`;
     const hostname = new URL(parsedUrl).hostname.toLowerCase();
 
-    return hostname
-      .replace(/^(www\.|m\.|feeds\.)/, '')
-      .trim();
+    return hostname.replace(/^(www\.|m\.|feeds\.)/, '').trim();
   } catch {
     return null;
   }

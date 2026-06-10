@@ -64,7 +64,9 @@ async function runSeed() {
     const existing = seed.name
       ? await repo.findOne({ where: { name: seed.name } })
       : seed.url && seed.category
-        ? await repo.findOne({ where: { url: seed.url, category: seed.category } })
+        ? await repo.findOne({
+            where: { url: seed.url, category: seed.category },
+          })
         : null;
 
     if (!existing) {
