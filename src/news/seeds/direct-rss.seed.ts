@@ -103,6 +103,31 @@ export const DIRECT_RSS: DirectRssEntry[] = [
     ],
   },
 
+  // --- TV Argentina ---
+  {
+    name: 'La Nación',
+    feeds: [
+      {
+        name: 'La Nación Música',
+        url: 'https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml',
+        category: 'musica',
+        selectors: { includedUrlPatterns: '/espectaculos/musica/' },
+      },
+      {
+        name: 'La Nación Televisión',
+        url: 'https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml',
+        category: 'tv_argentina',
+        selectors: { includedUrlPatterns: '/espectaculos/television/' },
+      },
+      {
+        name: 'La Nación Tecnología',
+        url: 'https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml',
+        category: 'tecnologia',
+        selectors: { includedUrlPatterns: '/tecnologia/' },
+      },
+    ],
+  },
+
   // --- TV Italiana ---
   {
     name: 'Rai News',
